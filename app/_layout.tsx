@@ -1,24 +1,19 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { useFonts } from "expo-font";
+import { SplashScreen, Stack } from "expo-router";
+import { useEffect } from "react";
+import "./global.css";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const [fontsLoaded, error] = useFonts({
+    "Garet-Regular": require("../assets/fonts/Garet-Regular.ttf"),
+    "Garet-Book": require("../assets/fonts/Garet-Book.ttf"),
+    "Garet-Heavy": require("../assets/fonts/Garet-Heavy.ttf"),
+  });
+  
+  useEffect(() => {
+    if (error) { throw error; }
+    if (fontsLoaded) { SplashScreen.hideAsync(); }
+  }, [fontsLoaded, error]);
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+  return <Stack screenOptions={{headerShown: false}} />;
 }
