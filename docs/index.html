@@ -420,8 +420,8 @@
       <div class="status-banner" role="note">
         <strong>The Supabase backend is live and populated.</strong>
         <p>The schema is captured in the repository, and row level security is enabled on every table.
-        Authentication and data loading target real data; the remaining blocker is native session
-        persistence.</p>
+        Authentication and data loading target real data, and native auth sessions persist across
+        restarts via AsyncStorage.</p>
       </div>
 
       <ul class="status-list">
@@ -447,10 +447,10 @@
           </span>
         </li>
         <li>
-          <span class="chip chip-bad">Broken</span>
+          <span class="chip chip-ok">Fixed</span>
           <span class="status-label">
             <strong>Session persistence</strong>
-            <span>No storage adapter + missing AsyncStorage, users are logged out on every native restart.</span>
+            <span>AsyncStorage is passed as the Supabase <code>auth.storage</code> adapter, so users stay signed in across native restarts.</span>
           </span>
         </li>
         <li>
@@ -497,7 +497,7 @@
         <div class="card">
           <h3>Now: blockers</h3>
           <ul>
-            <li>Persist auth sessions on native.</li>
+            <li>Persist auth sessions on native. ✅ Done.</li>
           </ul>
         </div>
         <div class="card">

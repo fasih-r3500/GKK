@@ -25,10 +25,10 @@ This document lists what exists in the codebase **today**, organised by audience
 - Standard email/password sign-in with error display and loading state.
 - Uses the live Supabase auth service; not verified end-to-end in this repository.
 
-### Auth gate / session handling: **Partial**
-- File: [`app/_layout.tsx`](../app/_layout.tsx)
+### Auth gate / session handling: **Complete**
+- File: [`app/_layout.tsx`](../app/_layout.tsx) and [`supabase.js`](../supabase.js)
 - Redirects signed-out users to login and signed-in users out of the auth screens.
-- Gap: **native sessions are not persisted**: the Supabase client has no storage adapter and `@react-native-async-storage/async-storage` is not installed, so users are logged out on every app restart.
+- Native sessions are persisted: `supabase.js` passes AsyncStorage as the Supabase client's `auth.storage` adapter, so users stay signed in across app restarts.
 
 ### Profile screen: **Complete**
 - File: [`app/profile.tsx`](../app/profile.tsx)
@@ -131,7 +131,7 @@ These exist in the source but do nothing (not presented as features):
 |---|---|---|
 | Shared | Sign-up | Partial |
 | Shared | Sign-in | Complete |
-| Shared | Auth gate / session | Partial (no persistence) |
+| Shared | Auth gate / session | Complete |
 | Shared | Profile | Complete |
 | Customer | Browse chefs | Complete |
 | Customer | Location / radius / sort | Complete |

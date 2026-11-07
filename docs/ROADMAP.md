@@ -14,7 +14,7 @@
 - **Platform:** the codebase stays cross-platform React Native and is intended to run on both Android and iOS. **Android is the first release target; iOS (and App Store shipping) follows later.** GKK is not Android-only.
 - **Cold start:** the owner will seed the **chef side first** by recruiting home cooks before opening to customers, so chef onboarding and kitchen quality come before customer acquisition.
 
-**Baseline (today):** Expo SDK 58 / React Native app, TypeScript type-checks, web and Android bundles build, and lint passes with zero errors (warnings remain). The Supabase database is live and populated, and its schema is captured in [`supabase/migrations/00000000000000_baseline.sql`](../supabase/migrations/00000000000000_baseline.sql). Native sessions are not persisted, and the only working order path is the phone-call button. Full detail in [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and [`docs/FEATURES.md`](./FEATURES.md).
+**Baseline (today):** Expo SDK 58 / React Native app, TypeScript type-checks, web and Android bundles build, and lint passes with zero errors (warnings remain). The Supabase database is live and populated, and its schema is captured in [`supabase/migrations/00000000000000_baseline.sql`](../supabase/migrations/00000000000000_baseline.sql). Native auth sessions are persisted via AsyncStorage, and the only working order path is the phone-call button. Full detail in [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and [`docs/FEATURES.md`](./FEATURES.md).
 
 ---
 
@@ -22,9 +22,8 @@
 
 These stop the app from being usable at all.
 
-1. **Persist auth sessions on native.**
-   - Install `@react-native-async-storage/async-storage` and pass it as the Supabase client's `auth.storage` adapter in [`supabase.js`](../supabase.js).
-   - Today sessions are memory-only, so users are logged out on every app restart.
+1. ✅ **Persist auth sessions on native.**
+   - Done: `@react-native-async-storage/async-storage` is installed and passed as the Supabase client's `auth.storage` adapter in [`supabase.js`](../supabase.js), so sessions survive app restarts.
 
 2. ✅ **Add the missing `react-native-svg` dependency.**
    - Done: `react-native-svg` is now a direct dependency (peer of `lucide-react-native`).
@@ -98,4 +97,4 @@ Once simple in-app ordering exists, the capabilities below become possible. They
 
 These decisions are still genuinely unowned. Do not guess at them.
 
-1. **Whether to begin the high-severity fix batch**: the remaining "Now" blocker (persist sessions) is identified, but starting that work awaits the owner's go-ahead.
+1. **Whether to begin the remaining "Next" work.** The "Now" blockers (including persisting native sessions) are cleared, so starting the next tranche of work awaits the owner's go-ahead.
