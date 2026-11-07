@@ -83,10 +83,10 @@ No migration creates it; create it by hand in the dashboard or with the Supabase
 
 - **Name:** `avatars`
 - **Public:** yes.
-  The app displays images by resolving the stored value with `resolveStorageImageUrl` in `services/storage.ts` (`components/chef/ChefDashboard.tsx`, `app/kitchen/[chefid].tsx`); `components/customer/CustomerHome.tsx:79` still calls `getPublicUrl` directly for kitchen photos.
+  The app displays images by resolving the stored value with `resolveStorageImageUrl` in `services/storage.ts` (`components/chef/DishCard.tsx`, `components/chef/DishFormModal.tsx`, `components/customer/CustomerHome.tsx`, `app/kitchen/[chefid].tsx`).
 - **How the app uses it:**
   - Kitchen photos upload to the bucket root and are stored in `chef_profiles.kitchen_image` as a bare file name (`components/chef/ChefOnboarding.tsx:84-98`).
-  - Dish photos upload under `dish-images/` and are stored in `dishes.image_url` as a bare path such as `dish-images/<user>-<timestamp>.jpg` (`components/chef/ChefDashboard.tsx` `uploadDishImage`).
+  - Dish photos upload under `dish-images/` and are stored in `dishes.image_url` as a bare path such as `dish-images/<user>-<timestamp>.jpg` (`components/chef/DishFormModal.tsx` `uploadDishImage`).
   - Both shapes are resolved for display by `resolveStorageImageUrl` in `services/storage.ts`: a bare path becomes a public URL, and a full URL (as written by older dish rows) is used as is.
   - Dish uploads send an explicit content type (`image/jpeg`, `image/png`, `image/webp`, `image/heic`, or `image/heif`) with the raw image bytes. Without it the client would default to `text/plain;charset=UTF-8`, which the MIME allowlist below rejects.
 

@@ -93,7 +93,7 @@ export default function Index() {
     return (
       <SafeAreaView className="flex-1 bg-white justify-center items-center px-6">
         <Text className="text-lg font-semibold text-gray-900 mb-2 text-center">
-          Couldn't load your account
+          Couldn&apos;t load your account
         </Text>
         <Text className="text-sm text-gray-500 mb-6 text-center">{error}</Text>
         <Pressable
