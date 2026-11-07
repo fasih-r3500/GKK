@@ -14,7 +14,7 @@
 - **Platform:** the codebase stays cross-platform React Native and is intended to run on both Android and iOS. **Android is the first release target; iOS (and App Store shipping) follows later.** GKK is not Android-only.
 - **Cold start:** the owner will seed the **chef side first** by recruiting home cooks before opening to customers, so chef onboarding and kitchen quality come before customer acquisition.
 
-**Baseline (today):** Expo SDK 54 / React Native app, TypeScript type-checks, web bundle builds. The Supabase database is live and populated, and its schema is captured in [`supabase/migrations/00000000000000_baseline.sql`](../supabase/migrations/00000000000000_baseline.sql). Native sessions are not persisted, `react-native-svg` is missing, and lint fails (5 errors / 14 warnings). The only working order path is the phone-call button. Full detail in [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and [`docs/FEATURES.md`](./FEATURES.md).
+**Baseline (today):** Expo SDK 58 / React Native app, TypeScript type-checks, web and Android bundles build, and lint passes with zero errors (warnings remain). The Supabase database is live and populated, and its schema is captured in [`supabase/migrations/00000000000000_baseline.sql`](../supabase/migrations/00000000000000_baseline.sql). Native sessions are not persisted, and the only working order path is the phone-call button. Full detail in [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and [`docs/FEATURES.md`](./FEATURES.md).
 
 ---
 
@@ -26,8 +26,10 @@ These stop the app from being usable at all.
    - Install `@react-native-async-storage/async-storage` and pass it as the Supabase client's `auth.storage` adapter in [`supabase.js`](../supabase.js).
    - Today sessions are memory-only, so users are logged out on every app restart.
 
-2. **Add the missing `react-native-svg` dependency.**
-   - Required as a peer of `lucide-react-native`; icons crash in native builds outside Expo Go without it.
+2. ✅ **Add the missing `react-native-svg` dependency.**
+   - Done: `react-native-svg` is now a direct dependency (peer of `lucide-react-native`).
+
+3. ✅ **Upgrade to Expo SDK 58** (see §5): the app targets the SDK that current Expo Go supports, so it can be opened in Expo Go on a physical device again.
 
 ---
 
@@ -55,14 +57,15 @@ Ordered to match the cold start: **chef onboarding and kitchen quality come befo
 
 ### 4. Code bugs (two, surgical)
 
-1. Fix the **Rules-of-Hooks violation** in [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx): hoist the hooks above the early return so a missing `chefid` can't change hook order and crash the screen.
+1. ✅ Fix the **Rules-of-Hooks violation** in [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx): the hooks are hoisted above the early return, so a missing `chefid` can no longer change hook order and crash the screen.
 2. Fix the **dish image double-wrap**: store the bare storage path in `dishes.image_url` (matching kitchen images) instead of the full public URL, so customer-facing dish images load.
 
 ### 5. Dependency and SDK alignment
 
-- Plan an **Expo SDK 58** upgrade (currently SDK 54, four majors behind and outside the current Expo Go support window).
-- Align the 14 packages below the SDK 54 patch line (`npx expo install --check`).
-- Work through the `npm audit` findings (44 at audit time; the bulk are dev/build toolchain, with `decode-uri-component`/`query-string` and `postcss` the runtime-relevant ones).
+- ✅ **Expo SDK 58 upgrade done**: `expo`, every `expo-*` package, `react-native` 0.88.1, React 19.3.0, `expo-router` 58, `react-native-reanimated` 4.7.1, `react-native-screens`, `react-native-gesture-handler` and `react-native-worklets` are aligned with `npx expo install --fix` / `--check`, and NativeWind is at 4.2.7.
+- ✅ The patch-line drift is cleared (`npx expo install --check` reports no outdated packages, `npx expo-doctor` passes 20/20).
+- ✅ Toolchain is green: `npx tsc --noEmit`, `npm run lint` (zero errors), `npx expo export --platform web` and `npx expo export --platform android` all pass.
+- Work through the remaining `npm audit` findings (the bulk are dev/build toolchain, with `decode-uri-component`/`query-string` and `postcss` the runtime-relevant ones).
 - Prune unused direct dependencies (see [`docs/FEATURES.md`](./FEATURES.md) dead code list).
 
 ### 6. Repository hygiene
@@ -72,7 +75,7 @@ Ordered to match the cold start: **chef onboarding and kitchen quality come befo
 - Resolve the stale `broken-nativewind` branch; it contains useful fixes (`react-native-svg`, `expo-dev-client`, an APK build type, a reanimated override) but merges in a way that deletes the whole feature set. Port the useful fixes, then delete the branch.
 - Fix the `reset-project` npm script, which points at a missing `scripts/` directory.
 - Fix the `tailwind.config.js` brand-colour override of `green-100` (rename to a `brand` token).
-- Green the lint (5 errors / 14 warnings) and remove dead code and unused template assets.
+- Green the lint: it now reports zero errors, with the remaining warnings (mostly unused variables and `exhaustive-deps`) still to clear, alongside dead code and unused template assets.
 - Rotate the Supabase anon key committed in [`supabase.js`](../supabase.js); it is valid until 2035 and sits in public git history.
 
 ---
@@ -95,4 +98,4 @@ Once simple in-app ordering exists, the capabilities below become possible. They
 
 These decisions are still genuinely unowned. Do not guess at them.
 
-1. **Whether to begin the high-severity fix batch**: the "Now" blockers above (persist sessions, add `react-native-svg`) are identified, but starting that work awaits the owner's go-ahead.
+1. **Whether to begin the high-severity fix batch**: the remaining "Now" blocker (persist sessions) is identified, but starting that work awaits the owner's go-ahead.
