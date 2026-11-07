@@ -164,8 +164,7 @@ These are structural issues, distinct from the specific code bugs listed in §7.
 
 1. **No service/repository layer.** Every data operation is an inline `supabase.from(...)` call in a component. There is no API abstraction, so changing backend behaviour or adding caching/offline support would touch every screen.
 2. **`any`-typed models, duplicated inline.** Model shapes are still `any[]` in several components, and `app/kitchen/[chefid].tsx` defines local `ChefProfile` and `Dish` interfaces that overlap `components/chef/types.ts`. There is no app-wide shared types module.
-3. **Silent error handling.** Most fetch paths `console.error` and render empty states; some flows surface `Alert`s. There are no error boundaries, and `app/index.tsx` swallows profile-fetch errors (a chef whose profile fails to load silently renders the customer home).
-4. **Redirect-loop risk.** If a signed-in user's `profiles` row is missing or blocked, `app/index.tsx` pushes them to `/auth/login` while `app/_layout.tsx` immediately bounces any signed-in user out of the auth group: a potential infinite loop that depends on the live `profiles` row and the RLS policies.
+3. **Silent error handling.** Most fetch paths `console.error` and render empty states; some flows surface `Alert`s. There are no error boundaries. The dispatcher (`app/index.tsx`) is the exception: it surfaces a profile-fetch failure with an explicit error state plus a retry and a login fallback, instead of silently rendering the customer home.
 
 ---
 
@@ -176,6 +175,6 @@ These are documented here for accuracy; they are not fixed by the documentation 
 | Defect | Location | Effect |
 |---|---|---|
 | Dish image URL double-wrapped | The dish upload helper stored the full public URL; `[chefid].tsx` re-wrapped it with `getPublicUrl` | Customer-facing dish images broken. **Fixed**: uploads store the bare path and every read goes through `resolveStorageImageUrl` |
-| Auth redirect loop | `app/index.tsx` ↔ `app/_layout.tsx` | Possible infinite loop on missing profile row |
+| Auth redirect loop | `app/index.tsx` ↔ `app/_layout.tsx` | Automatic infinite loop on a missing/blocked profile row. **Fixed**: the dispatcher shows an error state instead of auto-redirecting to `/auth/login` |
 
 See [`docs/ROADMAP.md`](./ROADMAP.md) for the proposed ordering.
