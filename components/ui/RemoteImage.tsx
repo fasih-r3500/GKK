@@ -36,10 +36,10 @@ export function RemoteImage({
   const imageStyle = useMemo(() => ({ width, height }), [height, width]);
 
   const handleError = useCallback(() => {
-    if (!sizedUri) return;
+    if (!sizedUri || sizedUri === uri) return;
     setFailedUri(sizedUri);
     markImageTransformsUnavailable();
-  }, [sizedUri]);
+  }, [sizedUri, uri]);
 
   if (!uri) {
     return null;

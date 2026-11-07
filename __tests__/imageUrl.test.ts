@@ -7,6 +7,8 @@ import {
 const PUBLIC_IMAGE =
   'https://example.supabase.co/storage/v1/object/public/avatars/dish-images/chef-1.jpg';
 
+const RETINA_SCALE = 2;
+
 describe('buildDisplayImageUrl', () => {
   beforeEach(() => {
     resetImageTransformsSupport();
@@ -15,7 +17,7 @@ describe('buildDisplayImageUrl', () => {
   it('asks Supabase for a resized variant of a public object URL', () => {
     expect(buildDisplayImageUrl(PUBLIC_IMAGE, 80, 80)).toBe(
       'https://example.supabase.co/storage/v1/render/image/public/avatars/dish-images/chef-1.jpg' +
-        '?width=160&height=160&resize=cover'
+        `?width=${80 * RETINA_SCALE}&height=${80 * RETINA_SCALE}&resize=cover`
     );
   });
 
@@ -24,7 +26,7 @@ describe('buildDisplayImageUrl', () => {
       'https://example.supabase.co/storage/v1/render/image/public/avatars/kitchen.jpg?quality=80';
 
     expect(buildDisplayImageUrl(renderUrl, 40, 40)).toBe(
-      `${renderUrl}&width=80&height=80&resize=cover`
+      `${renderUrl}&width=${40 * RETINA_SCALE}&height=${40 * RETINA_SCALE}&resize=cover`
     );
   });
 
