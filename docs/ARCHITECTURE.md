@@ -123,7 +123,8 @@ The client reads and writes three tables (all via inline `supabase.from(...)` ca
 
 ### Storage
 
-- Bucket: **`avatars`** (public). It holds kitchen photos and dish photos; there is no separate dish bucket.
+- Bucket: **`avatars`** (public). It holds kitchen photos and dish photos; no separate dish bucket is in use.
+  The buckets and their `storage.objects` policies are recorded in [`supabase/migrations/00000000000001_storage.sql`](../supabase/migrations/00000000000001_storage.sql).
 - Canonical stored value for an image column is a **bare object path** inside the bucket. Reads resolve that path to a public URL with `resolveStorageImageUrl` in [`services/storage.ts`](../services/storage.ts).
 - Kitchen images are uploaded to the bucket root (`ChefOnboarding.tsx:268-271`) and stored as a bare path (the file name built at `ChefOnboarding.tsx:265`) in `chef_profiles.kitchen_image`.
 - Dish images are uploaded under `dish-images/` and stored as a bare path such as `dish-images/<user>-<timestamp>.jpg` in `dishes.image_url` (`buildDishImagePath` and the `uploadDishImage` helper in `DishFormModal.tsx`).
