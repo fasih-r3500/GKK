@@ -307,8 +307,29 @@ One row per available dish with `id`, `name`, `chef_id`, `kitchen_name`, `price`
 ## Row level security
 
 Row Level Security is enabled on all nine tables.
-Owner-scoped policies compare `auth.uid()` with the row's user or chef id, and the browse policies for kitchen data are granted to the `authenticated` role.
-Requests without a signed-in session have no `auth.uid()` to match, so the app's queries return no rows.
+A policy either names a role in its `TO` clause or defaults to the Postgres `PUBLIC` pseudo-role, which includes both `anon` and `authenticated`.
+A missing `TO` clause is therefore not authenticated-only.
+
+### Read policies restricted to authenticated
+
+The read policies on `profiles`, `chef_profiles`, `dishes`, and `operating_hours` name `TO authenticated`, so an anonymous request returns no rows from those tables.
+The read policy on `reviews` is the exception and is covered under "Policies granted to PUBLIC" below.
+
+### Policies granted to PUBLIC
+
+These policies omit a `TO` clause and therefore apply to `PUBLIC`, which includes `anon`:
+
+- `customer_profiles`: `Customers can manage their own profile` (all commands), guarded by `auth.uid() = id`.
+- `favorites`: `Customers can manage their favorites` (all commands), guarded by `auth.uid() = customer_id`.
+- `operating_hours`: `Chefs can manage their operating hours` (all commands), guarded by `auth.uid() = chef_id`.
+- `orders`: `Customers can create orders` (insert), `Customers can view their own orders` (select), `Chefs can view orders for their kitchen` (select), and `Chefs can update their kitchen orders` (update), all guarded by `auth.uid()` comparisons with `customer_id` or `chef_id`.
+- `order_items`: `Order items inherit order policies` (select) and `Customers can create order items with orders` (insert), both guarded by the parent order's ownership through `auth.uid()`.
+- `reviews`: `Customers can create reviews for completed orders` (insert), guarded by `auth.uid() = customer_id` and a completed order owned by that customer.
+- `reviews`: `Anyone can view visible reviews` (select), guarded only by `is_visible = true`.
+
+Every policy in that list except the visible reviews read policy is guarded by an `auth.uid()` condition, so an anonymous request matches nothing.
+The visible reviews read policy has no `auth.uid()` condition, so the `anon` role can read `reviews` rows where `is_visible = true`.
+The app does not query `reviews` yet.
 
 ### `profiles`
 
@@ -325,7 +346,7 @@ Requests without a signed-in session have no `auth.uid()` to match, so the app's
 
 ### `customer_profiles`
 
-- `Customers can manage their own profile`: all commands on own row.
+- `Customers can manage their own profile`: all commands on own row, `public`.
 
 ### `dishes`
 
@@ -334,32 +355,31 @@ Requests without a signed-in session have no `auth.uid()` to match, so the app's
 
 ### `favorites`
 
-- `Customers can manage their favorites`: all commands on rows where `customer_id = auth.uid()`.
+- `Customers can manage their favorites`: all commands on rows where `customer_id = auth.uid()`, `public`.
 
 ### `operating_hours`
 
 - `Anyone can view operating hours`: select all rows, `authenticated`.
-- `Chefs can manage their operating hours`: all commands on rows where `chef_id = auth.uid()`.
+- `Chefs can manage their operating hours`: all commands on rows where `chef_id = auth.uid()`, `public`.
 
 ### `orders`
 
-- `Customers can create orders`: insert where `customer_id = auth.uid()`.
-- `Customers can view their own orders`: select where `customer_id = auth.uid()`.
-- `Chefs can view orders for their kitchen`: select where `chef_id = auth.uid()`.
-- `Chefs can update their kitchen orders`: update where `chef_id = auth.uid()`.
+- `Customers can create orders`: insert where `customer_id = auth.uid()`, `public`.
+- `Customers can view their own orders`: select where `customer_id = auth.uid()`, `public`.
+- `Chefs can view orders for their kitchen`: select where `chef_id = auth.uid()`, `public`.
+- `Chefs can update their kitchen orders`: update where `chef_id = auth.uid()`, `public`.
 - No delete policy.
 
 ### `order_items`
 
-- `Order items inherit order policies`: select rows whose parent order belongs to the current customer or chef.
-- `Customers can create order items with orders`: insert rows whose parent order belongs to the current customer.
+- `Order items inherit order policies`: select rows whose parent order belongs to the current customer or chef, `public`.
+- `Customers can create order items with orders`: insert rows whose parent order belongs to the current customer, `public`.
 
 ### `reviews`
 
-- `Anyone can view visible reviews`: select rows where `is_visible = true`.
-  This policy has no `TO` clause, so it applies to every role, including `anon`.
-  This is the one browse policy an anonymous request can read.
-- `Customers can create reviews for completed orders`: insert where `customer_id = auth.uid()` and the reviewed order belongs to that customer and has status `completed`.
+- `Anyone can view visible reviews`: select rows where `is_visible = true`, `public`.
+  This is the one read policy an anonymous request can satisfy.
+- `Customers can create reviews for completed orders`: insert where `customer_id = auth.uid()` and the reviewed order belongs to that customer and has status `completed`, `public`.
 
 ## Which screens read which tables
 

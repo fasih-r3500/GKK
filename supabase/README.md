@@ -58,10 +58,23 @@ If you copy auth users from another project, give each of them a `profiles` row 
 ## Row level security
 
 Row level security is enabled on all nine tables.
-Owner-scoped policies compare `auth.uid()` with the row's user or chef id, and the browse policies for kitchen data are granted to the `authenticated` role.
-Anonymous requests have no `auth.uid()` to match, so the app's queries return no rows.
+The read policies on `profiles`, `chef_profiles`, `dishes`, and `operating_hours` name `TO authenticated`, so an anonymous request returns no rows from those tables.
 
-One exception is worth knowing: the visible reviews read policy has no role restriction, so the `anon` role can read `reviews` rows where `is_visible = true`.
+Some policies omit a `TO` clause, which means they are granted to the Postgres `PUBLIC` pseudo-role, and therefore to both `anon` and `authenticated`:
+
+- `customer_profiles`: `Customers can manage their own profile`.
+- `favorites`: `Customers can manage their favorites`.
+- `operating_hours`: `Chefs can manage their operating hours`.
+- `orders`: `Customers can create orders`, `Customers can view their own orders`, `Chefs can view orders for their kitchen`, and `Chefs can update their kitchen orders`.
+- `order_items`: `Order items inherit order policies` and `Customers can create order items with orders`.
+- `reviews`: `Customers can create reviews for completed orders`.
+- `reviews`: `Anyone can view visible reviews`.
+
+Every policy in that list except `Anyone can view visible reviews` is guarded by an `auth.uid()` condition, so an anonymous request matches nothing.
+`Anyone can view visible reviews` has no `auth.uid()` condition and is the exception: its only condition is `is_visible = true`, so the `anon` role can read visible reviews.
+The app does not query `reviews` yet.
+
+`docs/DATABASE.md` gives the per-table conditions and the full policy list.
 
 ## Storage bucket
 
