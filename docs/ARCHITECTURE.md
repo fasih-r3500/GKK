@@ -17,6 +17,14 @@ GKK is a small Expo / React Native app (~2,300 lines across 10 route/component f
 
 The backend is a live Supabase project. Its schema is captured in [`supabase/migrations/00000000000000_baseline.sql`](../supabase/migrations/00000000000000_baseline.sql) and documented in [`docs/DATABASE.md`](./DATABASE.md).
 
+### Toolchain
+
+- **Expo SDK 58** (`expo ~58.0.23`) on React Native 0.88.1 and React 19.3.0. Every `expo-*` package, `react-native` and its native peers are aligned to the versions SDK 58 expects, and `npx expo install --check` reports no drift. The SDK 58 line is what current Expo Go on a physical device runs, so the app can be opened there.
+- **expo-router 58** file-based routing, **NativeWind 4.2.7** with Tailwind CSS 3 for styling, and `react-native-svg` as a direct dependency (peer of `lucide-react-native`).
+- **Babel**: `babel-preset-expo` with `jsxImportSource: "nativewind"` plus the `nativewind/babel` preset. `babel-preset-expo` adds the React Native Worklets plugin itself, so the config no longer lists a reanimated plugin by hand.
+- **Metro**: `withNativeWind` from `nativewind/metro` wrapping the default Expo config.
+- **Green toolchain**: `npx tsc --noEmit`, `npm run lint` (zero errors), `npx expo export --platform web` and `npx expo export --platform android` all pass, and `npx expo-doctor` reports 20/20 checks.
+
 ---
 
 ## 2. Route map: `app/`
@@ -149,9 +157,7 @@ These are documented here for accuracy; they are not fixed by the documentation 
 | Defect | Location | Effect |
 |---|---|---|
 | Session not persisted | `supabase.js` (no storage adapter) | Logged out on every native restart |
-| Missing `react-native-svg` | `package.json` (peer of `lucide-react-native`) | Icons crash in native builds outside Expo Go |
-| Rules-of-Hooks violation | `app/kitchen/[chefid].tsx:42-53` (early return before hooks) | Crash path when `chefid` is missing |
-| Dish image URL double-wrapped | `ChefDashboard.tsx:214-218` stores full URL; `[chefid].tsx:99-100` re-wraps with `getPublicUrl` | Customer-facing dish images broken |
+| Dish image URL double-wrapped | `ChefDashboard.tsx:216` stores full URL; `[chefid].tsx:89` re-wraps with `getPublicUrl` | Customer-facing dish images broken |
 | Auth redirect loop | `app/index.tsx` ↔ `app/_layout.tsx` | Possible infinite loop on missing profile row |
 
 See [`docs/ROADMAP.md`](./ROADMAP.md) for the proposed ordering.

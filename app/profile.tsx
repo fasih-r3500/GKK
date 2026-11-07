@@ -20,7 +20,6 @@ export default function ProfileScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const fetchProfile = async () => {
-    setLoading(true);
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       

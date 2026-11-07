@@ -8,6 +8,8 @@ This document lists what exists in the codebase **today**, organised by audience
 
 **Nothing here is overstated.** Where a control is decorative or a tab is a placeholder, it is called out. The Supabase database is live and populated, but no feature has been verified end-to-end in this repository; "complete" means "the code is written and type-checks", not "proven working against live data".
 
+**Toolchain:** Expo SDK 58 on React Native 0.88.1, aligned to the versions current Expo Go expects. `npx tsc --noEmit`, `npm run lint`, `npx expo export --platform web` and `npx expo export --platform android` pass.
+
 ---
 
 ## Shared (both audiences)
@@ -50,7 +52,6 @@ This document lists what exists in the codebase **today**, organised by audience
 - File: [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx)
 - Shows a chef's kitchen info, hygiene rating, cuisine types, and a dish menu.
 - Gap: **dish images are broken**: the URL is double-wrapped, so customer-facing dish images fail to load. Kitchen images work correctly.
-- Also contains a Rules-of-Hooks violation that can crash the screen when `chefid` is missing.
 
 ### "Order Now" call button: **Complete (stopgap)**
 - File: [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx), `handleOrderNow`
