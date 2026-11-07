@@ -414,13 +414,14 @@
     <div class="wrap">
       <div class="section-head">
         <h2 id="status-h">Current status</h2>
-        <p class="section-sub">Stated honestly: the code is structurally clean, but the app is not usable end-to-end today.</p>
+        <p class="section-sub">Stated honestly: the code is structurally clean, and the database is live, but the app still has open blockers.</p>
       </div>
 
       <div class="status-banner" role="note">
-        <strong>⚠️ The Supabase backend is offline.</strong>
-        <p>The project host <code>aqqyknwgspxnzahrdkbp.supabase.co</code> no longer resolves. Until the
-        Supabase project is restored or recreated, the app cannot sign in, sign up, or load any data.</p>
+        <strong>The Supabase backend is live and populated.</strong>
+        <p>The schema is captured in the repository, and row level security is enabled on every table.
+        Authentication and data loading target real data; the remaining blockers are native session
+        persistence and the missing icon dependency.</p>
       </div>
 
       <ul class="status-list">
@@ -439,10 +440,10 @@
           </span>
         </li>
         <li>
-          <span class="chip chip-bad">Blocked</span>
+          <span class="chip chip-ok">Live</span>
           <span class="status-label">
-            <strong>Backend</strong>
-            <span>Supabase project offline: auth and data loading fail.</span>
+            <strong>Database</strong>
+            <span>Supabase database live: schema and RLS are captured in the repository.</span>
           </span>
         </li>
         <li>
@@ -496,7 +497,6 @@
         <div class="card">
           <h3>Now: blockers</h3>
           <ul>
-            <li>Restore or recreate the Supabase backend.</li>
             <li>Persist auth sessions on native.</li>
             <li>Add the missing <code>react-native-svg</code>.</li>
           </ul>

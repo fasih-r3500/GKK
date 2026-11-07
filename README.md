@@ -11,7 +11,7 @@ Chefs publish a kitchen profile and a menu of dishes; customers discover nearby 
 
 GKK is community-serving, not a commercial venture: prices are in PKR, phone numbers are formatted for `+92`, and ordering runs by phone call (a stopgap) until simple in-app ordering with manual settlement (cash on delivery, JazzCash, Easypaisa, or bank transfer) ships.
 
-The app is not usable end-to-end today: the Supabase backend is offline, so sign-in, sign-up, and data loading all fail until it is restored. The full status and the tracked issues live in [`docs/`](./docs/).
+The Supabase database is live and populated, so sign-in, sign-up, and data loading target real data. Native sessions are still not persisted and `react-native-svg` is still missing; the full status and the tracked issues live in [`docs/`](./docs/).
 
 ## Direction
 
@@ -65,7 +65,7 @@ Prerequisites: Node.js (recent LTS) with npm, plus a phone with Expo Go **or** a
    npm ci
    ```
 
-2. **Configure Supabase.** The client in [`supabase.js`](./supabase.js) hard-codes its URL and anon key, and both currently point at an offline project:
+2. **Configure Supabase.** The client in [`supabase.js`](./supabase.js) hard-codes its URL and anon key for the live project:
 
    ```js
    // supabase.js
@@ -75,7 +75,7 @@ Prerequisites: Node.js (recent LTS) with npm, plus a phone with Expo Go **or** a
    );
    ```
 
-   Point both values at a restored or new project before the app can authenticate or load data. Moving them to `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` is future work. The app expects the `profiles`, `chef_profiles`, and `dishes` tables plus a public `avatars` storage bucket; see [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md#backend-supabase) for the schema.
+   Point both values at a different project only if you are not using the live one. Moving them to `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` is future work. The app expects the schema captured in [`supabase/migrations/00000000000000_baseline.sql`](./supabase/migrations/00000000000000_baseline.sql), including the `profiles`, `chef_profiles`, and `dishes` tables, plus a public `avatars` storage bucket; see [`docs/DATABASE.md`](./docs/DATABASE.md) for the full schema and [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md#backend-supabase) for how the client uses it.
 
 3. **Start the app.**
 
@@ -83,7 +83,7 @@ Prerequisites: Node.js (recent LTS) with npm, plus a phone with Expo Go **or** a
    npx expo start
    ```
 
-   Press `i` / `a` for simulators, scan the QR code with a device, or press `w` for web. The app stays empty without a reachable backend.
+   Press `i` / `a` for simulators, scan the QR code with a device, or press `w` for web. The app shows data from the configured project.
 
 4. **Check the code.**
 

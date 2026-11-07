@@ -2,11 +2,11 @@
 
 This document lists what exists in the codebase **today**, organised by audience. Every entry is labelled:
 
-- **Complete**: the code path is implemented and coherent (still gated by the offline backend).
+- **Complete**: the code path is implemented and coherent, but not verified end-to-end in this repository.
 - **Partial**: implemented but with known gaps or defects.
 - **Stub**: the UI exists but the behaviour is missing or decorative.
 
-**Nothing here is overstated.** Where a control is decorative or a tab is a placeholder, it is called out. Because the Supabase backend is offline, no feature has been verified end-to-end; "complete" means "the code is written and type-checks", not "proven working against live data".
+**Nothing here is overstated.** Where a control is decorative or a tab is a placeholder, it is called out. The Supabase database is live and populated, but no feature has been verified end-to-end in this repository; "complete" means "the code is written and type-checks", not "proven working against live data".
 
 ---
 
@@ -16,12 +16,12 @@ This document lists what exists in the codebase **today**, organised by audience
 - File: [`app/auth/signup.tsx`](../app/auth/signup.tsx)
 - Customer/chef toggle, `+92` phone formatting, password minimum of 6 characters, and an email-confirmation prompt after sign-up.
 - Gaps: phone formatting accepts partial numbers and can store `+92` plus incomplete digits; the sign-up success message assumes a confirmation email without checking verification state.
-- **Blocked by the offline backend**: sign-up cannot complete.
+- Uses the live Supabase auth service and the `on_auth_user_created` trigger; not verified end-to-end in this repository.
 
 ### Email/password sign-in: **Complete**
 - File: [`app/auth/login.tsx`](../app/auth/login.tsx)
 - Standard email/password sign-in with error display and loading state.
-- **Blocked by the offline backend**: sign-in cannot complete.
+- Uses the live Supabase auth service; not verified end-to-end in this repository.
 
 ### Auth gate / session handling: **Partial**
 - File: [`app/_layout.tsx`](../app/_layout.tsx)
@@ -31,7 +31,7 @@ This document lists what exists in the codebase **today**, organised by audience
 ### Profile screen: **Complete**
 - File: [`app/profile.tsx`](../app/profile.tsx)
 - View full name, email, phone, and user type; change password; sign out.
-- **Blocked by the offline backend** for loading and password updates.
+- Reads the live `profiles` table; password changes go through Supabase auth. Not verified end-to-end in this repository.
 
 ---
 
@@ -40,7 +40,7 @@ This document lists what exists in the codebase **today**, organised by audience
 ### Browse nearby chefs: **Complete**
 - File: [`components/customer/CustomerHome.tsx`](../components/customer/CustomerHome.tsx)
 - Lists active, accepting kitchens with name, cuisines, hygiene rating, and kitchen image.
-- **Blocked by the offline backend**: the list renders empty.
+- Reads live `chef_profiles` rows; not verified end-to-end in this repository.
 
 ### Location, radius filter, and sorting: **Complete**
 - Files: [`components/customer/CustomerHome.tsx`](../components/customer/CustomerHome.tsx), [`services/locationService.tsx`](../services/locationService.tsx)
@@ -79,12 +79,12 @@ This document lists what exists in the codebase **today**, organised by audience
 - 3-step wizard: kitchen info (name, bio, photo) → location (auto-geocode or manual, postcode) → cuisine selection.
 - Writes to `chef_profiles` and uploads a kitchen photo to the `avatars` bucket.
 - Minor: a `cuisineTypes` state variable is declared but unused.
-- **Blocked by the offline backend**: onboarding cannot save.
+- Writes to the live `chef_profiles` table and the `avatars` bucket; not verified end-to-end in this repository.
 
 ### Chef dashboard: **Complete**
 - File: [`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx)
 - "Accepting Orders" toggle, inline editing of kitchen name/bio/address/cuisines, and dish management (add, edit, delete, availability toggle).
-- **Blocked by the offline backend**: data cannot load or save.
+- Reads and writes the live `chef_profiles` and `dishes` tables; not verified end-to-end in this repository.
 
 ### Dish management with image upload: **Partial**
 - File: [`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx)
@@ -102,7 +102,7 @@ This document lists what exists in the codebase **today**, organised by audience
 These are required by the product owner but do not exist in the codebase yet. They are planned, not presented as working.
 
 - **In-app ordering**: a simple flow for a customer to place an order from a kitchen's menu. The current phone-call button is the stopgap.
-- **Order records / order history**: an `orders` (or equivalent) table and history views for both sides. The Orders tabs on both home screens are placeholders for this.
+- **Order records / order history**: the `orders` and `order_items` tables exist in the live schema, but order history views and UI do not. The Orders tabs on both home screens are placeholders for this.
 - **Settlement**: manual, outside the app, via cash on delivery (COD), JazzCash, Easypaisa, or bank transfer. No payment processing is built or planned in-app.
 - **Phone + password authentication**: replace the current email/password sign-in/sign-up with phone number + password; SMS one-time codes are deferred.
 
@@ -144,4 +144,4 @@ These exist in the source but do nothing (not presented as features):
 
 Planned but **not built**: in-app ordering, order history, and settlement (COD / JazzCash / Easypaisa / bank transfer).
 
-> "Complete" = code implemented and type-checks, **not** verified live: the backend is offline.
+> "Complete" = code implemented and type-checks, **not** verified live in this repository.

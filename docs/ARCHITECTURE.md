@@ -15,7 +15,7 @@ GKK is a small Expo / React Native app (~2,300 lines across 10 route/component f
 - **No service/repository layer** (except [`services/locationService.tsx`](../services/locationService.tsx)).
 - **No global state library**: local React state only.
 
-The backend is a Supabase project. As of writing, that project's host (`aqqyknwgspxnzahrdkbp.supabase.co`) does not resolve, so the backend is offline and the app cannot function end-to-end (see README "Current status").
+The backend is a live Supabase project. Its schema is captured in [`supabase/migrations/00000000000000_baseline.sql`](../supabase/migrations/00000000000000_baseline.sql) and documented in [`docs/DATABASE.md`](./DATABASE.md).
 
 ---
 
@@ -80,7 +80,7 @@ export const supabase = createClient(
 
 A single shared client instance. Two things matter:
 
-1. The URL and anon key are **hard-coded** (committed to the public repo). Anon keys are designed to ship client-side, so the exposure itself is not a leak; the real boundary is Row Level Security (RLS) on the backend, which cannot be verified while the project is offline.
+1. The URL and anon key are **hard-coded** (committed to the public repo). Anon keys are designed to ship client-side, so the exposure itself is not a leak; the real boundary is Row Level Security (RLS), which is defined in the live schema and documented in [`docs/DATABASE.md`](./DATABASE.md).
 2. The client is created **without a storage adapter**, and `@react-native-async-storage/async-storage` is not installed. On native, auth sessions therefore live only in memory and are lost on every restart (see §7).
 
 ### Tables
@@ -93,7 +93,7 @@ The client reads and writes three tables (all via inline `supabase.from(...)` ca
 | `chef_profiles` | `app/index.tsx`, `app/kitchen/[chefid].tsx`, `components/chef/ChefDashboard.tsx`, `components/chef/ChefOnboarding.tsx`, `components/customer/CustomerHome.tsx` | `id`, `kitchen_name`, `bio`, `kitchen_address`, `postcode`, `cuisine_types`, `food_hygiene_rating`, `is_verified`, `is_accepting_orders`, `is_active`, `average_preparation_time`, `kitchen_image`, `social_media`, `latitude`, `longitude` |
 | `dishes` | `app/kitchen/[chefid].tsx`, `components/chef/ChefDashboard.tsx` | `id`, `chef_id`, `name`, `description`, `price`, `category`, `cuisine_type`, `dietary_info`, `spice_level`, `preparation_time`, `serving_size`, `ingredients`, `image_url`, `is_available`, `created_at` |
 
-> These column lists are inferred from the queries in the source, not from a live schema: the backend is offline, so the actual table definitions could not be inspected.
+> The client uses the columns listed here. The full live schema, including all nine tables, is in [`supabase/migrations/00000000000000_baseline.sql`](../supabase/migrations/00000000000000_baseline.sql) and [`docs/DATABASE.md`](./DATABASE.md).
 
 ### Storage
 
@@ -110,7 +110,7 @@ Component
 supabase.js  (single shared client; hard-coded URL + anon key)
    │
    ▼
-Supabase REST/PostgREST + Storage  ── currently offline
+Supabase REST/PostgREST + Storage
 ```
 
 There is no intermediate service layer: components talk to Supabase directly. The one exception is `LocationService`, which wraps `expo-location` and provides distance/sort/filter helpers.
@@ -138,7 +138,7 @@ These are structural issues, distinct from the specific code bugs listed in §7.
 3. **Route-as-component anti-pattern.** `CustomerHome.tsx` and `ChefDashboard.tsx` both `import ProfileScreen from '../../app/profile'` and render it as a plain component. This couples a route module to two screens and bypasses the router for that tab.
 4. **`any`-typed models, duplicated inline.** Model shapes are `any[]` in most components, with interfaces redefined only in `[chefid].tsx`. There is no shared types module.
 5. **Silent error handling.** Most fetch paths `console.error` and render empty states; some flows surface `Alert`s. There are no error boundaries, and `app/index.tsx` swallows profile-fetch errors (a chef whose profile fails to load silently renders the customer home).
-6. **Redirect-loop risk.** If a signed-in user's `profiles` row is missing or blocked, `app/index.tsx` pushes them to `/auth/login` while `app/_layout.tsx` immediately bounces any signed-in user out of the auth group: a potential infinite loop that depends on backend setup we cannot currently verify.
+6. **Redirect-loop risk.** If a signed-in user's `profiles` row is missing or blocked, `app/index.tsx` pushes them to `/auth/login` while `app/_layout.tsx` immediately bounces any signed-in user out of the auth group: a potential infinite loop that depends on the live `profiles` row and the RLS policies.
 
 ---
 
@@ -148,7 +148,6 @@ These are documented here for accuracy; they are not fixed by the documentation 
 
 | Defect | Location | Effect |
 |---|---|---|
-| Backend offline | `supabase.js` project host | All auth + data loading fails |
 | Session not persisted | `supabase.js` (no storage adapter) | Logged out on every native restart |
 | Missing `react-native-svg` | `package.json` (peer of `lucide-react-native`) | Icons crash in native builds outside Expo Go |
 | Rules-of-Hooks violation | `app/kitchen/[chefid].tsx:42-53` (early return before hooks) | Crash path when `chefid` is missing |
