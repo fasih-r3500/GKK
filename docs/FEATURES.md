@@ -78,6 +78,7 @@ This document lists what exists in the codebase **today**, organised by audience
 ### Kitchen onboarding: **Complete**
 - File: [`components/chef/ChefOnboarding.tsx`](../components/chef/ChefOnboarding.tsx)
 - 3-step wizard: kitchen info (name, bio, photo) → location (auto-geocode or manual, postcode) → cuisine selection.
+- Shows step progress, plain language validation, and visible saving, success, and retry states for location lookup, photo upload, and the final save.
 - Writes to `chef_profiles` and uploads a kitchen photo to the `avatars` bucket.
 - Writes to the live `chef_profiles` table and the `avatars` bucket; not verified end-to-end in this repository.
 
