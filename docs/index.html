@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ghar Ki Kitchen (GKK) — Project Overview</title>
+<meta name="description" content="Ghar Ki Kitchen (GKK) is a charitable home-food initiative connecting home chefs in Karachi with customers who order home-cooked food.">
+<style>
+  :root {
+    --green: #76AB85;            /* brand green — used for accents, tints, borders */
+    --green-dark: #3E6B4F;       /* darker green — button backgrounds, links (AA contrast with white) */
+    --green-deeper: #2F5340;     /* darkest green — headings */
+    --ink: #1F2A23;              /* main text */
+    --muted: #46554B;            /* secondary text */
+    --bg: #F7FAF8;
+    --card: #FFFFFF;
+    --line: #DCE7E0;
+    --green-tint: #EAF3ED;
+    --amber-tint: #FBF3DF;
+    --amber-text: #6B4E0A;
+    --red-tint: #FBEAE5;
+    --red-text: #7A2E1B;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(31, 42, 35, 0.06), 0 8px 24px rgba(31, 42, 35, 0.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.6;
+    font-size: 1rem;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--green-dark);
+    text-underline-offset: 2px;
+  }
+  a:hover { color: var(--green-deeper); }
+
+  :focus-visible {
+    outline: 3px solid var(--green);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--green-dark);
+    color: #fff;
+    padding: 0.6rem 1rem;
+    z-index: 100;
+    border-radius: 0 0 8px 0;
+  }
+  .skip-link:focus { left: 0; color: #fff; }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+  }
+
+  /* ---------- header ---------- */
+  .masthead {
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .masthead-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 0;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--green);
+    color: var(--green-deeper);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.15rem;
+    flex: none;
+  }
+  .brand-name { font-weight: 700; font-size: 1.05rem; }
+  .brand-sub { display: block; font-size: 0.75rem; color: var(--muted); font-weight: 500; }
+
+  .nav-links {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  .nav-links a { text-decoration: none; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    background: linear-gradient(160deg, var(--green-tint) 0%, var(--bg) 70%);
+    border-bottom: 1px solid var(--line);
+    padding: 3.5rem 0 3rem;
+  }
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--green-dark);
+    background: #fff;
+    border: 1px solid var(--line);
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+  }
+  h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.15;
+    margin: 1rem 0 0.6rem;
+    color: var(--green-deeper);
+    letter-spacing: -0.02em;
+  }
+  .lede {
+    font-size: clamp(1.05rem, 2.5vw, 1.3rem);
+    color: var(--muted);
+    max-width: 42rem;
+    margin: 0 0 1.5rem;
+  }
+  .hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+  .btn {
+    display: inline-block;
+    padding: 0.7rem 1.3rem;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.95rem;
+    border: 1.5px solid transparent;
+  }
+  .btn-primary { background: var(--green-dark); color: #fff; }
+  .btn-primary:hover { background: var(--green-deeper); color: #fff; }
+  .btn-ghost { background: #fff; color: var(--green-dark); border-color: var(--green); }
+  .btn-ghost:hover { background: var(--green-tint); color: var(--green-deeper); }
+
+  /* ---------- sections ---------- */
+  section { padding: 2.75rem 0; }
+  .section-head { margin-bottom: 1.5rem; }
+  h2 {
+    font-size: clamp(1.4rem, 3vw, 1.8rem);
+    margin: 0 0 0.35rem;
+    color: var(--green-deeper);
+    letter-spacing: -0.01em;
+  }
+  .section-sub { color: var(--muted); margin: 0; max-width: 46rem; }
+
+  .grid { display: grid; gap: 1.25rem; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.4rem 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
+  }
+  .card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    color: var(--green-deeper);
+  }
+  .card p { margin: 0.5rem 0; color: var(--muted); font-size: 0.95rem; }
+  .card ul { margin: 0.5rem 0 0; padding-left: 1.2rem; color: var(--muted); font-size: 0.95rem; }
+  .card li { margin-bottom: 0.35rem; }
+
+  .card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    background: var(--green-tint);
+    color: var(--green-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 0.8rem;
+  }
+
+  /* ---------- status ---------- */
+  .status-banner {
+    border: 1px solid var(--line);
+    border-left: 5px solid var(--red-text);
+    background: var(--red-tint);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 1.5rem;
+  }
+  .status-banner strong { color: var(--red-text); }
+  .status-banner p { margin: 0.3rem 0 0; color: #5A2418; }
+
+  .status-list { list-style: none; padding: 0; margin: 0; }
+  .status-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .status-list li:last-child { border-bottom: 0; }
+
+  .chip {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex: none;
+    margin-top: 0.1rem;
+  }
+  .chip-ok { background: var(--green-tint); color: #1F5C38; border: 1px solid #CBE2D3; }
+  .chip-partial { background: var(--amber-tint); color: var(--amber-text); border: 1px solid #EBD8A8; }
+  .chip-bad { background: var(--red-tint); color: var(--red-text); border: 1px solid #EFC7BB; }
+
+  .status-label { flex: 1; }
+  .status-label strong { display: block; color: var(--ink); }
+  .status-label span { color: var(--muted); font-size: 0.9rem; }
+
+  /* ---------- details / disclosure ---------- */
+  details {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 0;
+    margin-bottom: 0.9rem;
+    overflow: hidden;
+  }
+  summary {
+    cursor: pointer;
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+    color: var(--green-deeper);
+    list-style-position: inside;
+  }
+  summary:hover { background: var(--green-tint); }
+  details[open] summary { border-bottom: 1px solid var(--line); }
+  details .body { padding: 0.25rem 1.25rem 1.25rem; color: var(--muted); font-size: 0.95rem; }
+
+  /* ---------- footer ---------- */
+  footer {
+    background: var(--green-deeper);
+    color: #EAF3ED;
+    margin-top: 2rem;
+  }
+  footer .wrap { padding: 2.25rem 1.25rem; }
+  footer a { color: #BFE0C9; }
+  footer a:hover { color: #fff; }
+  .footer-meta { font-size: 0.85rem; color: #C4D9CC; margin-top: 0.5rem; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 760px) {
+    .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    .masthead-inner { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .nav-links { gap: 0.9rem; }
+  }
+
+  @media print {
+    .masthead { position: static; }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark" aria-hidden="true">G</span>
+      <span>
+        <span class="brand-name">Ghar Ki Kitchen</span>
+        <span class="brand-sub">Home-cooked, from your neighbours</span>
+      </span>
+    </a>
+    <nav class="nav-links" aria-label="On this page">
+      <a href="#what">What it is</a>
+      <a href="#who">Who it serves</a>
+      <a href="#how">How it works</a>
+      <a href="#status">Status</a>
+      <a href="#planned">Planned</a>
+    </nav>
+  </div>
+</header>
+
+<div id="top"></div>
+
+<main id="main">
+  <div class="hero">
+    <div class="wrap">
+      <span class="eyebrow">Project overview · draft</span>
+      <h1>A marketplace for home-cooked food in Karachi</h1>
+      <p class="lede">
+        Ghar Ki Kitchen (GKK) is a charitable home-food initiative run by Fazal-e-Insaaniyat Charity Works (FI).
+        It connects <strong>home chefs</strong> who cook from their own kitchens with <strong>customers</strong>
+        who want honest, home-cooked meals nearby — starting in <strong>Karachi</strong>. Chefs publish a
+        kitchen profile and a menu; customers discover kitchens, browse dishes, and order.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#status">Read the current status</a>
+        <a class="btn btn-ghost" href="#how">How it works</a>
+      </div>
+    </div>
+  </div>
+
+  <section id="what" aria-labelledby="what-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="what-h">What it is</h2>
+        <p class="section-sub">A mobile app (Android and iOS via Expo) backed by Supabase, written in React Native and TypeScript — operated by Fazal-e-Insaaniyat Charity Works (FI), a family-run charity.</p>
+      </div>
+      <div class="grid grid-3">
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🍛</div>
+          <h3>A community marketplace</h3>
+          <p>Chefs publish what they cook; customers browse and order. Two interfaces, one shared account and backend.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">📍</div>
+          <h3>Location-aware</h3>
+          <p>Customers see kitchens near them, filtered by radius and sorted by distance, rating, or name.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">📱</div>
+          <h3>Karachi first</h3>
+          <p>Prices in PKR, <code>+92</code> phone handling, and a launch focused on Karachi. Settlement is manual: cash on delivery, JazzCash, Easypaisa, or bank transfer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="who" aria-labelledby="who-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="who-h">Who it serves</h2>
+      </div>
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">👩‍🍳</div>
+          <h3>Home chefs</h3>
+          <ul>
+            <li>Set up a kitchen with a name, bio, photos, address, and cuisines.</li>
+            <li>Publish a menu with prices, dietary tags, and spice levels.</li>
+            <li>Toggle "accepting orders" on and off at any time.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-icon" aria-hidden="true">🛍️</div>
+          <h3>Customers</h3>
+          <ul>
+            <li>Discover active kitchens near their location.</li>
+            <li>Filter and sort the list; browse each kitchen's menu.</li>
+            <li>Order by calling the kitchen from inside the app.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how" aria-labelledby="how-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="how-h">How it works</h2>
+        <p class="section-sub">The app is organised around three shared pieces: accounts, a chef side, and a customer side.</p>
+      </div>
+      <div class="grid grid-3">
+        <div class="card">
+          <h3>1 · Account</h3>
+          <p>Create an account as a customer or chef. The app gates every screen on your session and role.</p>
+        </div>
+        <div class="card">
+          <h3>2 · Chef side</h3>
+          <p>A three-step onboarding wizard, then a dashboard for editing kitchen details and managing dishes.</p>
+        </div>
+        <div class="card">
+          <h3>3 · Customer side</h3>
+          <p>A home screen of nearby kitchens, each with a menu page. Ordering today is by phone call; simple in-app ordering is planned.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="status" aria-labelledby="status-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="status-h">Current status</h2>
+        <p class="section-sub">Stated honestly — the code is structurally clean, but the app is not usable end-to-end today.</p>
+      </div>
+
+      <div class="status-banner" role="note">
+        <strong>⚠️ The Supabase backend is offline.</strong>
+        <p>The project host <code>aqqyknwgspxnzahrdkbp.supabase.co</code> no longer resolves. Until the
+        Supabase project is restored or recreated, the app cannot sign in, sign up, or load any data.</p>
+      </div>
+
+      <ul class="status-list">
+        <li>
+          <span class="chip chip-ok">Passing</span>
+          <span class="status-label">
+            <strong>Type checking</strong>
+            <span><code>npx tsc --noEmit</code> passes under <code>strict: true</code>.</span>
+          </span>
+        </li>
+        <li>
+          <span class="chip chip-ok">Passing</span>
+          <span class="status-label">
+            <strong>Web bundle</strong>
+            <span><code>npx expo export --platform web</code> builds successfully.</span>
+          </span>
+        </li>
+        <li>
+          <span class="chip chip-bad">Blocked</span>
+          <span class="status-label">
+            <strong>Backend</strong>
+            <span>Supabase project offline — auth and data loading fail.</span>
+          </span>
+        </li>
+        <li>
+          <span class="chip chip-bad">Broken</span>
+          <span class="status-label">
+            <strong>Session persistence</strong>
+            <span>No storage adapter + missing AsyncStorage — users are logged out on every native restart.</span>
+          </span>
+        </li>
+        <li>
+          <span class="chip chip-bad">Broken</span>
+          <span class="status-label">
+            <strong>Icons in native builds</strong>
+            <span><code>react-native-svg</code> is missing, so lucide icons crash outside Expo Go.</span>
+          </span>
+        </li>
+        <li>
+          <span class="chip chip-partial">Needs work</span>
+          <span class="status-label">
+            <strong>Lint</strong>
+            <span><code>npm run lint</code> reports 5 errors and 14 warnings.</span>
+          </span>
+        </li>
+      </ul>
+
+      <details>
+        <summary>Read the honest feature breakdown</summary>
+        <div class="body">
+          <p>What exists today is documented in <a href="./FEATURES.md">FEATURES.md</a>, labelled
+          <em>complete</em>, <em>partial</em>, or <em>stub</em>. A few things that look like features are
+          not yet working:</p>
+          <ul>
+            <li>The search bar and cart button on the customer home are decorative — they have no handlers.</li>
+            <li>The Orders tabs on both home screens are placeholders ("Orders tab content here").</li>
+            <li>Ordering works only by phone call today; in-app ordering and settlement are planned, not built.</li>
+            <li>Customer-facing dish images are broken by a URL double-wrapping bug.</li>
+          </ul>
+          <p>See <a href="./ARCHITECTURE.md">ARCHITECTURE.md</a> for the code-level detail.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section id="planned" aria-labelledby="planned-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="planned-h">What is planned</h2>
+        <p class="section-sub">The roadmap is informed by the product owner and orders the work they asked for; a few decisions remain open.</p>
+      </div>
+      <div class="grid grid-3">
+        <div class="card">
+          <h3>Now — blockers</h3>
+          <ul>
+            <li>Restore or recreate the Supabase backend.</li>
+            <li>Persist auth sessions on native.</li>
+            <li>Add the missing <code>react-native-svg</code>.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Next — simple in-app ordering</h3>
+          <ul>
+            <li>Customers place orders from a kitchen's menu.</li>
+            <li>Manual settlement: COD, JazzCash, Easypaisa, or bank transfer.</li>
+            <li>Then the two code bugs, dependency/SDK alignment, and repository hygiene.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Later — growth</h3>
+          <ul>
+            <li>Order status and notifications.</li>
+            <li>Ratings and repeat ordering.</li>
+            <li>Only after the owner chooses.</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:1.5rem;color:var(--muted);font-size:0.95rem;">
+        Full detail, including the open questions that still need a product owner, is in
+        <a href="./ROADMAP.md">ROADMAP.md</a>.
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p style="margin:0 0 0.35rem;">
+      <strong>Ghar Ki Kitchen</strong> — documentation, generated from the repository as it stands.
+    </p>
+    <p class="footer-meta" style="margin:0;">
+      Docs: <a href="./ARCHITECTURE.md">Architecture</a> ·
+      <a href="./FEATURES.md">Features</a> ·
+      <a href="./ROADMAP.md">Roadmap</a> ·
+      <a href="../README.md">README</a>
+    </p>
+    <p class="footer-meta">Brand green <code>#76AB85</code>. This page has no JavaScript and no external assets.</p>
+  </div>
+</footer>
+
+</body>
+</html>
