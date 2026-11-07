@@ -11,7 +11,7 @@ Chefs publish a kitchen profile and a menu of dishes; customers discover nearby 
 
 GKK is community-serving, not a commercial venture: prices are in PKR, phone numbers are formatted for `+92`, and ordering runs by phone call (a stopgap) until simple in-app ordering with manual settlement (cash on delivery, JazzCash, Easypaisa, or bank transfer) ships.
 
-The Supabase database is live and populated, so sign-in, sign-up, and data loading target real data. Native sessions are still not persisted; the full status and the tracked issues live in [`docs/`](./docs/).
+The Supabase database is live and populated, so sign-in, sign-up, and data loading target real data. Native auth sessions are persisted via AsyncStorage, so users stay signed in across restarts; the full status and the remaining tracked issues live in [`docs/`](./docs/).
 
 ## Direction
 

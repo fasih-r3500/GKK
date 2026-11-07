@@ -78,18 +78,25 @@ Profile viewing, password change, and sign-out. Used as a route and embedded as 
 ### Client: `supabase.js`
 
 ```js
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
 
 export const supabase = createClient(
   'https://aqqyknwgspxnzahrdkbp.supabase.co',
-  'eyJ...' // anon key
+  'eyJ...', // anon key
+  {
+    auth: {
+      storage: Platform.OS === 'web' ? undefined : AsyncStorage,
+    },
+  }
 );
 ```
 
 A single shared client instance. Two things matter:
 
 1. The URL and anon key are **hard-coded** (committed to the public repo). Anon keys are designed to ship client-side, so the exposure itself is not a leak; the real boundary is Row Level Security (RLS), which is defined in the live schema and documented in [`docs/DATABASE.md`](./DATABASE.md).
-2. The client is created **without a storage adapter**, and `@react-native-async-storage/async-storage` is not installed. On native, auth sessions therefore live only in memory and are lost on every restart (see §7).
+2. The client passes **AsyncStorage as the `auth.storage` adapter on native**, so sessions are persisted and survive a cold start. On web it passes no adapter and lets the client use localStorage, which also keeps the static export working (AsyncStorage's web build reads `window` during prerender).
 
 ### Tables
 
@@ -158,7 +165,6 @@ These are documented here for accuracy; they are not fixed by the documentation 
 
 | Defect | Location | Effect |
 |---|---|---|
-| Session not persisted | `supabase.js` (no storage adapter) | Logged out on every native restart |
 | Dish image URL double-wrapped | `ChefDashboard.tsx` upload helper stored the full public URL; `[chefid].tsx` re-wrapped it with `getPublicUrl` | Customer-facing dish images broken. **Fixed**: uploads store the bare path and every read goes through `resolveStorageImageUrl` |
 | Auth redirect loop | `app/index.tsx` ↔ `app/_layout.tsx` | Possible infinite loop on missing profile row |
 
