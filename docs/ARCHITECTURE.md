@@ -60,7 +60,7 @@ The customer home screen:
 
 ### Chef: `components/chef/ChefDashboard.tsx` and `components/chef/ChefOnboarding.tsx`
 
-- **`ChefOnboarding.tsx`** is a 3-step wizard (kitchen info → location → cuisines). It geocodes the kitchen address via `LocationService`, uploads a kitchen photo to the `avatars` bucket (`uploadImage`, `ChefOnboarding.tsx:84-103`), and writes the profile to `chef_profiles`.
+- **`ChefOnboarding.tsx`** is a 3-step wizard (kitchen info → location → cuisines). It geocodes the kitchen address via `LocationService`, uploads a kitchen photo to the `avatars` bucket (`uploadImage`, `ChefOnboarding.tsx:260-275`), and writes the profile to `chef_profiles`.
 - **`ChefDashboard.tsx`** (the largest file, ~847 lines) provides:
   - An "Accepting Orders" toggle (`toggleAcceptingOrders`).
   - Inline editing of kitchen name, bio, address, and cuisine types.
@@ -114,7 +114,7 @@ The client reads and writes three tables (all via inline `supabase.from(...)` ca
 
 - Bucket: **`avatars`** (public). It holds kitchen photos and dish photos; there is no separate dish bucket.
 - Canonical stored value for an image column is a **bare object path** inside the bucket. Reads resolve that path to a public URL with `resolveStorageImageUrl` in [`services/storage.ts`](../services/storage.ts).
-- Kitchen images are uploaded to the bucket root (`ChefOnboarding.tsx:92-94`) and stored as a bare path (the file name built at `ChefOnboarding.tsx:90`) in `chef_profiles.kitchen_image`.
+- Kitchen images are uploaded to the bucket root (`ChefOnboarding.tsx:268-271`) and stored as a bare path (the file name built at `ChefOnboarding.tsx:265`) in `chef_profiles.kitchen_image`.
 - Dish images are uploaded under `dish-images/` and stored as a bare path such as `dish-images/<user>-<timestamp>.jpg` in `dishes.image_url` (`buildDishImagePath` and `uploadDishImage` in `ChefDashboard.tsx`).
 - `dishes.image_url` rows written before this convention hold a full public URL. `resolveStorageImageUrl` returns an absolute URL as is and only builds a public URL for a bare path, so both shapes render and no data migration is needed.
 

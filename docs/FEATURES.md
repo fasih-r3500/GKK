@@ -78,8 +78,8 @@ This document lists what exists in the codebase **today**, organised by audience
 ### Kitchen onboarding: **Complete**
 - File: [`components/chef/ChefOnboarding.tsx`](../components/chef/ChefOnboarding.tsx)
 - 3-step wizard: kitchen info (name, bio, photo) → location (auto-geocode or manual, postcode) → cuisine selection.
+- Shows step progress, plain language validation, and visible saving, success, and retry states for location lookup, photo upload, and the final save.
 - Writes to `chef_profiles` and uploads a kitchen photo to the `avatars` bucket.
-- Minor: a `cuisineTypes` state variable is declared but unused.
 - Writes to the live `chef_profiles` table and the `avatars` bucket; not verified end-to-end in this repository.
 
 ### Chef dashboard: **Complete**
@@ -119,7 +119,6 @@ These exist in the source but do nothing (not presented as features):
 
 - `handleOpenInMaps`: defined but never rendered ([`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx)).
 - `kitchenImageUrl`: computed but unused ([`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx)).
-- `cuisineTypes` / `setCuisineTypes`: unused state ([`components/chef/ChefOnboarding.tsx`](../components/chef/ChefOnboarding.tsx)).
 - Unused template assets: `assets/images/location.png`, `react-logo*.png`, `partial-react-logo.png`.
 - Unused dependencies: `@react-navigation/bottom-tabs`, `@react-navigation/elements`, `expo-haptics`, `expo-symbols`, `expo-web-browser`, `expo-system-ui`, `expo-linking`, `expo-constants`, `@expo/vector-icons`, `prettier-plugin-tailwindcss` (see [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and the audit notes).
 
