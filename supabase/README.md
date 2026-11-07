@@ -83,7 +83,7 @@ No migration creates it; create it by hand in the dashboard or with the Supabase
 
 - **Name:** `avatars`
 - **Public:** yes.
-  The app calls `getPublicUrl` to display images (`components/customer/CustomerHome.tsx:84`, `components/chef/ChefDashboard.tsx:325`, `app/kitchen/[chefid].tsx:92`).
+  The app displays images by resolving the stored value with `resolveStorageImageUrl` in `services/storage.ts` (`components/chef/ChefDashboard.tsx`, `app/kitchen/[chefid].tsx`); `components/customer/CustomerHome.tsx:79` still calls `getPublicUrl` directly for kitchen photos.
 - **How the app uses it:**
   - Kitchen photos upload to the bucket root and are stored in `chef_profiles.kitchen_image` as a bare file name (`components/chef/ChefOnboarding.tsx:84-98`).
   - Dish photos upload under `dish-images/` and are stored in `dishes.image_url` as a bare path such as `dish-images/<user>-<timestamp>.jpg` (`components/chef/ChefDashboard.tsx` `uploadDishImage`).

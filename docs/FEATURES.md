@@ -135,14 +135,14 @@ These exist in the source but do nothing (not presented as features):
 | Shared | Profile | Complete |
 | Customer | Browse chefs | Complete |
 | Customer | Location / radius / sort | Complete |
-| Customer | Kitchen page + menu | Partial (dish images broken) |
+| Customer | Kitchen page + menu | Complete |
 | Customer | Call-to-order | Complete |
 | Customer | Search | Stub |
 | Customer | Cart | Stub |
 | Customer | Orders | Stub |
 | Chef | Onboarding | Complete |
 | Chef | Dashboard | Complete |
-| Chef | Dish CRUD + upload | Partial (image URL bug) |
+| Chef | Dish CRUD + upload | Complete |
 | Chef | Orders | Stub |
 
 Planned but **not built**: in-app ordering, order history, and settlement (COD / JazzCash / Easypaisa / bank transfer).
