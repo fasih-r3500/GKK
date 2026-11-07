@@ -1,10 +1,10 @@
-# GKK — Features
+# GKK: Features
 
 This document lists what exists in the codebase **today**, organised by audience. Every entry is labelled:
 
-- **Complete** — the code path is implemented and coherent (still gated by the offline backend).
-- **Partial** — implemented but with known gaps or defects.
-- **Stub** — the UI exists but the behaviour is missing or decorative.
+- **Complete**: the code path is implemented and coherent (still gated by the offline backend).
+- **Partial**: implemented but with known gaps or defects.
+- **Stub**: the UI exists but the behaviour is missing or decorative.
 
 **Nothing here is overstated.** Where a control is decorative or a tab is a placeholder, it is called out. Because the Supabase backend is offline, no feature has been verified end-to-end; "complete" means "the code is written and type-checks", not "proven working against live data".
 
@@ -12,23 +12,23 @@ This document lists what exists in the codebase **today**, organised by audience
 
 ## Shared (both audiences)
 
-### Email/password sign-up — **Partial**
+### Email/password sign-up: **Partial**
 - File: [`app/auth/signup.tsx`](../app/auth/signup.tsx)
 - Customer/chef toggle, `+92` phone formatting, password minimum of 6 characters, and an email-confirmation prompt after sign-up.
 - Gaps: phone formatting accepts partial numbers and can store `+92` plus incomplete digits; the sign-up success message assumes a confirmation email without checking verification state.
-- **Blocked by the offline backend** — sign-up cannot complete.
+- **Blocked by the offline backend**: sign-up cannot complete.
 
-### Email/password sign-in — **Complete**
+### Email/password sign-in: **Complete**
 - File: [`app/auth/login.tsx`](../app/auth/login.tsx)
 - Standard email/password sign-in with error display and loading state.
-- **Blocked by the offline backend** — sign-in cannot complete.
+- **Blocked by the offline backend**: sign-in cannot complete.
 
-### Auth gate / session handling — **Partial**
+### Auth gate / session handling: **Partial**
 - File: [`app/_layout.tsx`](../app/_layout.tsx)
 - Redirects signed-out users to login and signed-in users out of the auth screens.
-- Gap: **native sessions are not persisted** — the Supabase client has no storage adapter and `@react-native-async-storage/async-storage` is not installed, so users are logged out on every app restart.
+- Gap: **native sessions are not persisted**: the Supabase client has no storage adapter and `@react-native-async-storage/async-storage` is not installed, so users are logged out on every app restart.
 
-### Profile screen — **Complete**
+### Profile screen: **Complete**
 - File: [`app/profile.tsx`](../app/profile.tsx)
 - View full name, email, phone, and user type; change password; sign out.
 - **Blocked by the offline backend** for loading and password updates.
@@ -37,36 +37,36 @@ This document lists what exists in the codebase **today**, organised by audience
 
 ## Customer
 
-### Browse nearby chefs — **Complete**
+### Browse nearby chefs: **Complete**
 - File: [`components/customer/CustomerHome.tsx`](../components/customer/CustomerHome.tsx)
 - Lists active, accepting kitchens with name, cuisines, hygiene rating, and kitchen image.
-- **Blocked by the offline backend** — the list renders empty.
+- **Blocked by the offline backend**: the list renders empty.
 
-### Location, radius filter, and sorting — **Complete**
+### Location, radius filter, and sorting: **Complete**
 - Files: [`components/customer/CustomerHome.tsx`](../components/customer/CustomerHome.tsx), [`services/locationService.tsx`](../services/locationService.tsx)
 - Requests foreground location, reverse-geocodes the address, saves it to `profiles`, filters chefs by radius (5 / 10 / 20 km / all), and sorts by distance, rating, or name.
 
-### Kitchen page with menu — **Partial**
+### Kitchen page with menu: **Partial**
 - File: [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx)
 - Shows a chef's kitchen info, hygiene rating, cuisine types, and a dish menu.
-- Gap: **dish images are broken** — the URL is double-wrapped, so customer-facing dish images fail to load. Kitchen images work correctly.
+- Gap: **dish images are broken**: the URL is double-wrapped, so customer-facing dish images fail to load. Kitchen images work correctly.
 - Also contains a Rules-of-Hooks violation that can crash the screen when `chefid` is missing.
 
-### "Order Now — Call Kitchen" — **Complete (stopgap)**
+### "Order Now" call button: **Complete (stopgap)**
 - File: [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx), `handleOrderNow`
 - Opens a `tel:` link to the chef's phone number. Disabled when the kitchen is not accepting orders.
 - **This phone-call flow is the only working order path today, and it is a stopgap.** In-app ordering, order history, and settlement are planned but **not built** (see "Not yet built" below).
-- Note: this exposes every chef's phone number to any authenticated customer. That is a **deliberate, known trade-off for now** — chef phone numbers stay visible to every signed-in user, with tightening deferred (see Roadmap).
+- Note: this exposes every chef's phone number to any authenticated customer. That is a **deliberate, known trade-off for now**: chef phone numbers stay visible to every signed-in user, with tightening deferred (see Roadmap).
 
-### Search bar — **Stub (decorative)**
+### Search bar: **Stub (decorative)**
 - File: [`components/customer/CustomerHome.tsx`](../components/customer/CustomerHome.tsx)
 - A search `TextInput` ("Search for food or kitchens") is rendered but has **no handler** and filters nothing.
 
-### Cart button — **Stub (decorative)**
+### Cart button: **Stub (decorative)**
 - File: [`components/customer/CustomerHome.tsx`](../components/customer/CustomerHome.tsx)
 - The header "Cart" button is rendered but has **no handler** and no cart state.
 
-### Orders tab — **Stub (placeholder)**
+### Orders tab: **Stub (placeholder)**
 - File: [`components/customer/CustomerHome.tsx`](../components/customer/CustomerHome.tsx), `renderContent` → `"Orders"`
 - Renders the literal text "Orders tab content here". No order history exists.
 
@@ -74,24 +74,24 @@ This document lists what exists in the codebase **today**, organised by audience
 
 ## Chef
 
-### Kitchen onboarding — **Complete**
+### Kitchen onboarding: **Complete**
 - File: [`components/chef/ChefOnboarding.tsx`](../components/chef/ChefOnboarding.tsx)
 - 3-step wizard: kitchen info (name, bio, photo) → location (auto-geocode or manual, postcode) → cuisine selection.
 - Writes to `chef_profiles` and uploads a kitchen photo to the `avatars` bucket.
 - Minor: a `cuisineTypes` state variable is declared but unused.
-- **Blocked by the offline backend** — onboarding cannot save.
+- **Blocked by the offline backend**: onboarding cannot save.
 
-### Chef dashboard — **Complete**
+### Chef dashboard: **Complete**
 - File: [`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx)
 - "Accepting Orders" toggle, inline editing of kitchen name/bio/address/cuisines, and dish management (add, edit, delete, availability toggle).
-- **Blocked by the offline backend** — data cannot load or save.
+- **Blocked by the offline backend**: data cannot load or save.
 
-### Dish management with image upload — **Partial**
+### Dish management with image upload: **Partial**
 - File: [`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx)
 - Full CRUD modal including dietary tags, spice level, prep time, serving size, ingredients, and photo upload.
 - Gap: uploaded dish images store the **full public URL** instead of the bare storage path, which breaks them on the customer kitchen page (see above).
 
-### Orders tab — **Stub (placeholder)**
+### Orders tab: **Stub (placeholder)**
 - File: [`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx), `renderContent` → `"Orders"`
 - Renders the literal text "Orders tab content here". No order management exists.
 
@@ -101,10 +101,10 @@ This document lists what exists in the codebase **today**, organised by audience
 
 These are required by the product owner but do not exist in the codebase yet. They are planned, not presented as working.
 
-- **In-app ordering** — a simple flow for a customer to place an order from a kitchen's menu. The current phone-call button is the stopgap.
-- **Order records / order history** — an `orders` (or equivalent) table and history views for both sides. The Orders tabs on both home screens are placeholders for this.
-- **Settlement** — manual, outside the app: cash on delivery (COD), JazzCash, Easypaisa, or bank transfer. No payment processing is built or planned in-app.
-- **Phone + password authentication** — replace the current email/password sign-in/sign-up with phone number + password; SMS one-time codes are deferred.
+- **In-app ordering**: a simple flow for a customer to place an order from a kitchen's menu. The current phone-call button is the stopgap.
+- **Order records / order history**: an `orders` (or equivalent) table and history views for both sides. The Orders tabs on both home screens are placeholders for this.
+- **Settlement**: manual, outside the app, via cash on delivery (COD), JazzCash, Easypaisa, or bank transfer. No payment processing is built or planned in-app.
+- **Phone + password authentication**: replace the current email/password sign-in/sign-up with phone number + password; SMS one-time codes are deferred.
 
 See [`docs/ROADMAP.md`](./ROADMAP.md) for the ordering of this work.
 
@@ -114,9 +114,9 @@ See [`docs/ROADMAP.md`](./ROADMAP.md) for the ordering of this work.
 
 These exist in the source but do nothing (not presented as features):
 
-- `handleOpenInMaps` — defined but never rendered ([`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx)).
-- `kitchenImageUrl` — computed but unused ([`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx)).
-- `cuisineTypes` / `setCuisineTypes` — unused state ([`components/chef/ChefOnboarding.tsx`](../components/chef/ChefOnboarding.tsx)).
+- `handleOpenInMaps`: defined but never rendered ([`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx)).
+- `kitchenImageUrl`: computed but unused ([`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx)).
+- `cuisineTypes` / `setCuisineTypes`: unused state ([`components/chef/ChefOnboarding.tsx`](../components/chef/ChefOnboarding.tsx)).
 - Unused template assets: `assets/images/location.png`, `react-logo*.png`, `partial-react-logo.png`.
 - Unused dependencies: `@react-navigation/bottom-tabs`, `@react-navigation/elements`, `expo-haptics`, `expo-symbols`, `expo-web-browser`, `expo-system-ui`, `expo-linking`, `expo-constants`, `@expo/vector-icons`, `prettier-plugin-tailwindcss` (see [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and the audit notes).
 
@@ -144,4 +144,4 @@ These exist in the source but do nothing (not presented as features):
 
 Planned but **not built**: in-app ordering, order history, and settlement (COD / JazzCash / Easypaisa / bank transfer).
 
-> "Complete" = code implemented and type-checks, **not** verified live — the backend is offline.
+> "Complete" = code implemented and type-checks, **not** verified live: the backend is offline.
