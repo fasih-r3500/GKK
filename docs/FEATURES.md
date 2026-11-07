@@ -48,10 +48,10 @@ This document lists what exists in the codebase **today**, organised by audience
 - Files: [`components/customer/CustomerHome.tsx`](../components/customer/CustomerHome.tsx), [`services/locationService.tsx`](../services/locationService.tsx)
 - Requests foreground location, reverse-geocodes the address, saves it to `profiles`, filters chefs by radius (5 / 10 / 20 km / all), and sorts by distance, rating, or name.
 
-### Kitchen page with menu: **Partial**
+### Kitchen page with menu: **Complete**
 - File: [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx)
-- Shows a chef's kitchen info, hygiene rating, cuisine types, and a dish menu.
-- Gap: **dish images are broken**: the URL is double-wrapped, so customer-facing dish images fail to load. Kitchen images work correctly.
+- Shows a chef's kitchen info, hygiene rating, cuisine types, and a dish menu with dish photos.
+- Dish photos render from both stored shapes: the bare storage path written today and the full public URL written by older rows (`resolveStorageImageUrl` in [`services/storage.ts`](../services/storage.ts)).
 
 ### "Order Now" call button: **Complete (stopgap)**
 - File: [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx), `handleOrderNow`
@@ -87,10 +87,12 @@ This document lists what exists in the codebase **today**, organised by audience
 - "Accepting Orders" toggle, inline editing of kitchen name/bio/address/cuisines, and dish management (add, edit, delete, availability toggle).
 - Reads and writes the live `chef_profiles` and `dishes` tables; not verified end-to-end in this repository.
 
-### Dish management with image upload: **Partial**
+### Dish management with image upload: **Complete**
 - File: [`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx)
 - Full CRUD modal including dietary tags, spice level, prep time, serving size, ingredients, and photo upload.
-- Gap: uploaded dish images store the **full public URL** instead of the bare storage path, which breaks them on the customer kitchen page (see above).
+- Uploaded dish photos store the bare storage path (`dish-images/<user>-<timestamp>.<ext>`) in `dishes.image_url`, matching how `chef_profiles.kitchen_image` stores kitchen photos. A failed upload raises an alert that names the reason, so a silent failure can no longer look like success.
+- Display tolerates both stored shapes through `resolveStorageImageUrl` in [`services/storage.ts`](../services/storage.ts), so dish photos written as full public URLs before this change still render.
+- Not verified on a physical device from this repository.
 
 ### Orders tab: **Stub (placeholder)**
 - File: [`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx), `renderContent` → `"Orders"`
@@ -133,14 +135,14 @@ These exist in the source but do nothing (not presented as features):
 | Shared | Profile | Complete |
 | Customer | Browse chefs | Complete |
 | Customer | Location / radius / sort | Complete |
-| Customer | Kitchen page + menu | Partial (dish images broken) |
+| Customer | Kitchen page + menu | Complete |
 | Customer | Call-to-order | Complete |
 | Customer | Search | Stub |
 | Customer | Cart | Stub |
 | Customer | Orders | Stub |
 | Chef | Onboarding | Complete |
 | Chef | Dashboard | Complete |
-| Chef | Dish CRUD + upload | Partial (image URL bug) |
+| Chef | Dish CRUD + upload | Complete |
 | Chef | Orders | Stub |
 
 Planned but **not built**: in-app ordering, order history, and settlement (COD / JazzCash / Easypaisa / bank transfer).

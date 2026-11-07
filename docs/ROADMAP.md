@@ -58,7 +58,7 @@ Ordered to match the cold start: **chef onboarding and kitchen quality come befo
 ### 4. Code bugs (two, surgical)
 
 1. ✅ Fix the **Rules-of-Hooks violation** in [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx): the hooks are hoisted above the early return, so a missing `chefid` can no longer change hook order and crash the screen.
-2. Fix the **dish image double-wrap**: store the bare storage path in `dishes.image_url` (matching kitchen images) instead of the full public URL, so customer-facing dish images load.
+2. ✅ Fix the **dish image double-wrap**: `dishes.image_url` now stores the bare storage path (matching kitchen images), and every read resolves both the bare-path and the legacy full-URL shape through `resolveStorageImageUrl` in [`services/storage.ts`](../services/storage.ts), so customer-facing dish images load without a data migration.
 
 ### 5. Dependency and SDK alignment
 

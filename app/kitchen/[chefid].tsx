@@ -3,6 +3,7 @@ import { useLocalSearchParams } from "expo-router";
 import { Star } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, Image, Linking, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { resolveStorageImageUrl } from "../../services/storage";
 import { supabase } from "../../supabase";
 
 interface ChefProfile {
@@ -73,21 +74,18 @@ export default function KitchenPage() {
       console.error("Error fetching dishes:", dishesError.message);
     }
 
-    // Flatten the phone_number from profiles and get kitchen image URL
+    // Flatten the phone_number from profiles and resolve the kitchen image
     const chefWithPhone = {
       ...chefData,
       phone_number: chefData?.profiles?.phone_number || null,
-      kitchen_image: chefData.kitchen_image
-        ? supabase.storage.from("avatars").getPublicUrl(chefData.kitchen_image).data.publicUrl
-        : null
+      kitchen_image: resolveStorageImageUrl(chefData.kitchen_image),
     };
 
-    // Get dish image URLs
+    // Resolve dish image paths. Rows written before the bare-path convention hold a full
+    // public URL, and resolveStorageImageUrl returns those unchanged.
     const dishesWithImages = dishesData?.map(dish => ({
       ...dish,
-      image_url: dish.image_url
-        ? supabase.storage.from("avatars").getPublicUrl(dish.image_url).data.publicUrl
-        : null
+      image_url: resolveStorageImageUrl(dish.image_url),
     })) || [];
 
     setChef(chefWithPhone);

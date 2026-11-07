@@ -16,6 +16,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ProfileScreen from '../../app/profile';
+import {
+  STORAGE_BUCKET,
+  base64ToBytes,
+  buildDishImagePath,
+  describeError,
+  imageContentType,
+  resolveStorageImageUrl,
+} from '../../services/storage';
 import { supabase } from '../../supabase';
 
 interface ChefDashboardProps {
@@ -184,40 +192,57 @@ export default function ChefDashboard({ userId }: ChefDashboardProps) {
   };
 
   const pickDishImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-    });
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (!result.canceled && result.assets[0]) {
-      await uploadDishImage(result.assets[0].uri);
+      if (!permission.granted) {
+        Alert.alert(
+          'Photo access needed',
+          'Allow photo access for GharKaKhana in your phone settings, then try adding the dish photo again.'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await uploadDishImage(result.assets[0]);
+      }
+    } catch (error) {
+      Alert.alert('Could not open your photos', describeError(error));
     }
   };
 
-  const uploadDishImage = async (uri: string) => {
+  const uploadDishImage = async (asset: ImagePicker.ImagePickerAsset) => {
     setUploadingImage(true);
     try {
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      const fileExt = uri.split('.').pop();
-      const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      const filePath = `dish-images/${fileName}`;
+      if (!asset.base64) {
+        throw new Error(
+          'The selected photo could not be read from this device. Please choose it again.'
+        );
+      }
+
+      const sourceName = asset.fileName ?? asset.uri;
+      const filePath = buildDishImagePath(userId, asset.mimeType, sourceName);
+      const contentType = imageContentType(asset.mimeType, sourceName);
 
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, blob);
+        .from(STORAGE_BUCKET)
+        .upload(filePath, base64ToBytes(asset.base64), { contentType, upsert: false });
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      setDishForm({ ...dishForm, image_url: publicUrl });
+      // Store the bare object path: it matches chef_profiles.kitchen_image and survives a
+      // bucket or project move. Rendering resolves it with resolveStorageImageUrl.
+      setDishForm((current) => ({ ...current, image_url: filePath }));
     } catch (error) {
-      Alert.alert('Error', 'Failed to upload image');
+      Alert.alert('Dish photo upload failed', describeError(error));
     } finally {
       setUploadingImage(false);
     }
@@ -270,7 +295,7 @@ export default function ChefDashboard({ userId }: ChefDashboardProps) {
       await fetchKitchenData();
       setDishModalVisible(false);
     } catch (error) {
-      Alert.alert('Error', 'Failed to save dish');
+      Alert.alert('Could not save dish', describeError(error));
     }
   };
 
@@ -321,9 +346,8 @@ export default function ChefDashboard({ userId }: ChefDashboardProps) {
     );
   }
 
-  const kitchenImageUrl = kitchen?.kitchen_image
-    ? supabase.storage.from('avatars').getPublicUrl(kitchen.kitchen_image).data.publicUrl
-    : null;
+  const kitchenImageUrl = resolveStorageImageUrl(kitchen?.kitchen_image);
+  const dishFormImageUrl = resolveStorageImageUrl(dishForm.image_url);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -535,55 +559,59 @@ export default function ChefDashboard({ userId }: ChefDashboardProps) {
                 </View>
               ) : (
                 <View>
-                  {dishes.map((dish) => (
-                    <View
-                      key={dish.id}
-                      className="bg-gray-50 rounded-2xl mb-4 p-4 flex-row"
-                    >
-                      {dish.image_url && (
-                        <Image
-                          source={{ uri: dish.image_url }}
-                          className="w-20 h-20 rounded-xl mr-4"
-                        />
-                      )}
-                      <View className="flex-1">
-                        <View className="flex-row justify-between items-start">
-                          <View className="flex-1">
-                            <Text className="text-base font-heavy text-black">
-                              {dish.name}
-                            </Text>
-                            <Text className="text-sm text-gray-600 font-book mt-1" numberOfLines={2}>
-                              {dish.description}
-                            </Text>
-                            <Text className="text-lg font-heavy text-[#76AB85] mt-2">
-                              Rs. {dish.price}
-                            </Text>
-                          </View>
-                          <Switch
-                            value={dish.is_available}
-                            onValueChange={() => toggleDishAvailability(dish.id, dish.is_available)}
-                            trackColor={{ false: '#767577', true: '#76AB85' }}
-                          />
-                        </View>
+                  {dishes.map((dish) => {
+                    const dishImageUrl = resolveStorageImageUrl(dish.image_url);
 
-                        <View className="flex-row gap-2 mt-3">
-                          <TouchableOpacity
-                            onPress={() => openDishModal(dish)}
-                            className="flex-1 bg-white border border-gray-300 rounded-lg py-2 flex-row justify-center items-center"
-                          >
-                            <Edit size={16} color="#666" />
-                            <Text className="text-gray-700 font-semibold ml-2">Edit</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            onPress={() => deleteDish(dish.id)}
-                            className="flex-1 bg-red-50 border border-red-300 rounded-lg py-2 flex-row justify-center items-center"
-                          >
-                            <Text className="text-red-600 font-semibold">Delete</Text>
-                          </TouchableOpacity>
+                    return (
+                      <View
+                        key={dish.id}
+                        className="bg-gray-50 rounded-2xl mb-4 p-4 flex-row"
+                      >
+                        {dishImageUrl && (
+                          <Image
+                            source={{ uri: dishImageUrl }}
+                            className="w-20 h-20 rounded-xl mr-4"
+                          />
+                        )}
+                        <View className="flex-1">
+                          <View className="flex-row justify-between items-start">
+                            <View className="flex-1">
+                              <Text className="text-base font-heavy text-black">
+                                {dish.name}
+                              </Text>
+                              <Text className="text-sm text-gray-600 font-book mt-1" numberOfLines={2}>
+                                {dish.description}
+                              </Text>
+                              <Text className="text-lg font-heavy text-[#76AB85] mt-2">
+                                Rs. {dish.price}
+                              </Text>
+                            </View>
+                            <Switch
+                              value={dish.is_available}
+                              onValueChange={() => toggleDishAvailability(dish.id, dish.is_available)}
+                              trackColor={{ false: '#767577', true: '#76AB85' }}
+                            />
+                          </View>
+
+                          <View className="flex-row gap-2 mt-3">
+                            <TouchableOpacity
+                              onPress={() => openDishModal(dish)}
+                              className="flex-1 bg-white border border-gray-300 rounded-lg py-2 flex-row justify-center items-center"
+                            >
+                              <Edit size={16} color="#666" />
+                              <Text className="text-gray-700 font-semibold ml-2">Edit</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={() => deleteDish(dish.id)}
+                              className="flex-1 bg-red-50 border border-red-300 rounded-lg py-2 flex-row justify-center items-center"
+                            >
+                              <Text className="text-red-600 font-semibold">Delete</Text>
+                            </TouchableOpacity>
+                          </View>
                         </View>
                       </View>
-                    </View>
-                  ))}
+                    );
+                  })}
                 </View>
               )}
             </View>
@@ -638,8 +666,8 @@ export default function ChefDashboard({ userId }: ChefDashboardProps) {
               >
                 {uploadingImage ? (
                   <ActivityIndicator size="large" color="#76AB85" />
-                ) : dishForm.image_url ? (
-                  <Image source={{ uri: dishForm.image_url }} className="w-full h-full rounded-xl" />
+                ) : dishFormImageUrl ? (
+                  <Image source={{ uri: dishFormImageUrl }} className="w-full h-full rounded-xl" />
                 ) : (
                   <View className="items-center">
                     <Camera size={40} color="#ccc" />
