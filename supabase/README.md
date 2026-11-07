@@ -1,59 +1,83 @@
-# Supabase setup for GKK
+# Supabase schema for GKK
 
-This directory holds the SQL migrations that reconstruct the application schema
-GKK expects. The tables were defined only in the Supabase dashboard before the
-project lost its schema, so every column is derived from the application source
-and traced in the migration comments.
+This directory holds the SQL migrations for the Supabase project behind GharKaKhana (GKK).
+The database is live and populated.
+`migrations/00000000000000_baseline.sql` is a schema-only dump of that database, not a reconstruction from application source.
 
-The migrations are idempotent and timestamp-ordered. They do not modify the live
-database by themselves.
+The baseline records the schema as it exists: nine tables in the `public` schema, the `user_type`, `order_status`, and `day_of_week` enum types, helper functions, views, triggers, indexes, and row level security policies.
+It also includes the `on_auth_user_created` trigger on `auth.users`, which was appended by hand because it lives outside the `public` schema.
 
-## Apply the migrations
+The three earlier migration files in this directory were reconstructed from application source while the database was mistakenly believed lost.
+They were wrong: they defined three tables instead of nine, treated `user_type` as text, and would fail or mislead if applied.
+They have been deleted and replaced by the baseline.
 
-Apply the files yourself in the Supabase dashboard SQL editor, in timestamp order.
+## How the baseline was captured
 
-1. Open the Supabase dashboard for the project
-   `aqqyknwgspxnzahrdkbp.supabase.co`.
-2. In the sidebar, open **SQL Editor** and create a new query.
-3. Paste the contents of each file and run it, one file at a time, in this order:
-   1. `migrations/20251107000000_create_tables.sql`
-   2. `migrations/20251107000001_handle_new_user_trigger.sql`
-   3. `migrations/20251107000002_enable_rls_and_policies.sql`
-4. Confirm under **Table Editor** that `profiles`, `chef_profiles`, and `dishes`
-   now exist.
-5. Under **Authentication -> Users**, confirm a new signup creates a `profiles`
-   row (and, for a chef signup, a `chef_profiles` row).
+The file was produced from the live database with:
 
-The dashboard SQL editor runs as `postgres`, which can create objects in both the
-`public` and `auth` schemas. That is the role the migrations expect. The files are
-safe to re-run.
+```sh
+pg_dump --schema-only --schema=public --no-owner --no-privileges
+```
 
-The trigger only covers users who sign up after it is applied. If the restored
-project still has auth users from before the schema was lost, give each of them a
-`profiles` row by hand (and, for `user_type = chef`, a matching `chef_profiles`
-row) before they sign in.
+The `on_auth_user_created` trigger on `auth.users` is outside the `public` schema, so `pg_dump` does not emit it.
+It was appended to the end of the dump by hand so a rebuild leaves the database in the same state.
+
+Do not edit the dumped SQL: the file is the record of the current schema.
+Future changes belong in new, later migration files.
+
+## Apply the baseline to a fresh project
+
+The baseline documents an existing database.
+Applying it creates a new database with the same schema; it does not copy any data.
+
+1. Create a Supabase project.
+2. Copy its database connection string from **Project Settings -> Database -> Connection string -> URI**.
+   Use a role that can create objects in both the `public` and `auth` schemas, such as `postgres`.
+3. A standard Postgres or Supabase database already has a `public` schema, so remove only the dump's `CREATE SCHEMA public;` line while streaming the file, then apply the rest in one transaction:
+
+   ```sh
+   sed '/^CREATE SCHEMA public;$/d' supabase/migrations/00000000000000_baseline.sql \
+     | psql "$DATABASE_URL" --single-transaction
+   ```
+
+   The `CREATE SCHEMA public;` line fails on a fresh project because the schema already exists, and inside `--single-transaction` that failure would abort every later statement.
+   Filtering that one line leaves the rest of the dump unchanged.
+
+4. Confirm under **Table Editor** that these nine tables exist: `profiles`, `chef_profiles`, `customer_profiles`, `dishes`, `favorites`, `operating_hours`, `orders`, `order_items`, and `reviews`.
+5. Confirm under **Authentication -> Policies** that row level security is enabled on all nine tables.
+
+The file contains the `\restrict` and `\unrestrict` psql meta-commands emitted by `pg_dump`.
+The dashboard SQL editor may reject those lines; use `psql`, or remove only those two lines if pasting the file into the editor.
+
+The baseline is the first migration by timestamp, so the Supabase CLI and similar tools apply it first if this project later gains a `config.toml`.
+It expects the Supabase `auth` schema and `auth.users` table to exist, which a fresh Supabase project provides.
+
+The trigger only covers users who sign up after it is applied.
+If you copy auth users from another project, give each of them a `profiles` row and the matching `customer_profiles` or `chef_profiles` row, following the logic in `public.handle_new_user`.
+
+## Row level security
+
+Row level security is enabled on all nine tables.
+Owner-scoped policies compare `auth.uid()` with the row's user or chef id, and the browse policies for kitchen data are granted to the `authenticated` role.
+Anonymous requests have no `auth.uid()` to match, so the app's queries return no rows.
+
+One exception is worth knowing: the visible reviews read policy has no role restriction, so the `anon` role can read `reviews` rows where `is_visible = true`.
 
 ## Storage bucket
 
-The app expects one public storage bucket named **`avatars`**. The migration files
-do not create it; create it by hand.
+The app expects one public storage bucket named **`avatars`**.
+No migration creates it; create it by hand in the dashboard or with the Supabase CLI.
 
 - **Name:** `avatars`
-- **Public:** yes. The app calls `getPublicUrl` to display images
-  (`components/customer/CustomerHome.tsx:83-84`,
-  `components/chef/ChefDashboard.tsx:324-325`).
+- **Public:** yes.
+  The app calls `getPublicUrl` to display images (`components/customer/CustomerHome.tsx:84`, `components/chef/ChefDashboard.tsx:325`, `app/kitchen/[chefid].tsx:92`).
 - **How the app uses it:**
-  - Kitchen photos upload to the bucket root and are stored in
-    `chef_profiles.kitchen_image` as a bare file name
-    (`components/chef/ChefOnboarding.tsx:84-103`).
-  - Dish photos upload under `dish-images/` and are stored in `dishes.image_url`
-    (`components/chef/ChefDashboard.tsx:199-224`).
+  - Kitchen photos upload to the bucket root and are stored in `chef_profiles.kitchen_image` as a bare file name (`components/chef/ChefOnboarding.tsx:84-98`).
+  - Dish photos upload under `dish-images/` and are stored in `dishes.image_url` (`components/chef/ChefDashboard.tsx:199-224`).
 
 Set these limits on the bucket (**Storage -> `avatars` -> Settings**):
 
-- **Allowed MIME types:** `image/jpeg`, `image/png`, `image/webp`, `image/heic`,
-  `image/heif`.
+- **Allowed MIME types:** `image/jpeg`, `image/png`, `image/webp`, `image/heic`, `image/heif`.
 - **Maximum file size:** 5 MB per file.
 
-The app does not enforce these limits itself; Supabase storage limits are the only
-hard limit.
+The app does not enforce these limits itself; Supabase storage limits are the only hard limit.

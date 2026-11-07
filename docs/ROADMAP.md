@@ -14,7 +14,7 @@
 - **Platform:** the codebase stays cross-platform React Native and is intended to run on both Android and iOS. **Android is the first release target; iOS (and App Store shipping) follows later.** GKK is not Android-only.
 - **Cold start:** the owner will seed the **chef side first** by recruiting home cooks before opening to customers, so chef onboarding and kitchen quality come before customer acquisition.
 
-**Baseline (today):** Expo SDK 54 / React Native app, TypeScript type-checks, web bundle builds, but the Supabase backend is offline so the app cannot authenticate or load data. Native sessions are not persisted, `react-native-svg` is missing, and lint fails (5 errors / 14 warnings). The only working order path is the phone-call button. Full detail in [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and [`docs/FEATURES.md`](./FEATURES.md).
+**Baseline (today):** Expo SDK 54 / React Native app, TypeScript type-checks, web bundle builds. The Supabase database is live and populated, and its schema is captured in [`supabase/migrations/00000000000000_baseline.sql`](../supabase/migrations/00000000000000_baseline.sql). Native sessions are not persisted, `react-native-svg` is missing, and lint fails (5 errors / 14 warnings). The only working order path is the phone-call button. Full detail in [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and [`docs/FEATURES.md`](./FEATURES.md).
 
 ---
 
@@ -22,17 +22,11 @@
 
 These stop the app from being usable at all.
 
-1. **Restore or recreate the Supabase backend.**
-   - The project host `aqqyknwgspxnzahrdkbp.supabase.co` no longer resolves (NXDOMAIN); the project is paused or deleted.
-   - Until it returns, sign-up, sign-in, and all data loading fail.
-   - Supabase is the cost-conscious choice: it is already the configured backend, so restoring it avoids new infrastructure spend.
-   - After restore: verify Row Level Security on `profiles`, `chef_profiles`, `dishes` (owner-scoped policies) and the `avatars` bucket, then rotate the anon key (valid until 2035, present in public git history).
-
-2. **Persist auth sessions on native.**
+1. **Persist auth sessions on native.**
    - Install `@react-native-async-storage/async-storage` and pass it as the Supabase client's `auth.storage` adapter in [`supabase.js`](../supabase.js).
    - Today sessions are memory-only, so users are logged out on every app restart.
 
-3. **Add the missing `react-native-svg` dependency.**
+2. **Add the missing `react-native-svg` dependency.**
    - Required as a peer of `lucide-react-native`; icons crash in native builds outside Expo Go without it.
 
 ---
@@ -50,9 +44,9 @@ Ordered to match the cold start: **chef onboarding and kitchen quality come befo
 ### 2. Simple in-app ordering (the owner's core requirement)
 
 - A customer can place an order from a kitchen's menu (no cart/payment complexity required initially).
-- An **order record** persists per order (an `orders` table or equivalent), visible to both the customer and the chef; the Orders tabs on both home screens are the placeholder for this.
+- An **order record** persists per order in the existing `orders` and `order_items` tables, visible to both the customer and the chef; the Orders tabs on both home screens are the placeholder for this.
 - **Settlement stays manual and out-of-app:** cash on delivery, JazzCash, Easypaisa, or bank transfer. No in-app payment processing.
-- Reuse the existing Supabase backend (cheapest option) for the order table rather than adding new infrastructure.
+- Use the existing `orders`, `order_items`, and `order_status` schema rather than adding new infrastructure.
 
 ### 3. Authentication: phone number + password
 
@@ -79,6 +73,7 @@ Ordered to match the cold start: **chef onboarding and kitchen quality come befo
 - Fix the `reset-project` npm script, which points at a missing `scripts/` directory.
 - Fix the `tailwind.config.js` brand-colour override of `green-100` (rename to a `brand` token).
 - Green the lint (5 errors / 14 warnings) and remove dead code and unused template assets.
+- Rotate the Supabase anon key committed in [`supabase.js`](../supabase.js); it is valid until 2035 and sits in public git history.
 
 ---
 
@@ -86,7 +81,7 @@ Ordered to match the cold start: **chef onboarding and kitchen quality come befo
 
 Once simple in-app ordering exists, the capabilities below become possible. They are directions, ordered only loosely, and none is committed until the owner chooses.
 
-- **Order status for both sides** (placed → confirmed → ready → completed).
+- **Order status for both sides** (`pending`, `confirmed`, `preparing`, `ready`, `completed`, `cancelled`).
 - **Notifications** (order received, order ready).
 - **Ratings / reviews** for kitchens.
 - **Order history and repeat ordering**.
@@ -100,4 +95,4 @@ Once simple in-app ordering exists, the capabilities below become possible. They
 
 These decisions are still genuinely unowned. Do not guess at them.
 
-1. **Whether to begin the high-severity fix batch**: the "Now" blockers above (restore the backend, persist sessions, add `react-native-svg`) are identified, but starting that work awaits the owner's go-ahead.
+1. **Whether to begin the high-severity fix batch**: the "Now" blockers above (persist sessions, add `react-native-svg`) are identified, but starting that work awaits the owner's go-ahead.
