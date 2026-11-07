@@ -200,11 +200,17 @@ export default function ChefOnboarding({ userId, onComplete }: ChefOnboardingPro
     try {
       const location = await LocationService.getCurrentLocation();
       if (location) {
-        setKitchenAddress(location.address || '');
-        setLatitude(location.latitude);
-        setLongitude(location.longitude);
-        setLocationState('found');
-        clearError('kitchenAddress');
+        const address = tidyText(location.address || '');
+        const hasUsableAddress = address.replace(/[,\s]+/g, '').length > 0;
+        if (hasUsableAddress) {
+          setKitchenAddress(address);
+          setLatitude(location.latitude);
+          setLongitude(location.longitude);
+          setLocationState('found');
+          clearError('kitchenAddress');
+        } else {
+          setLocationState('failed');
+        }
       } else {
         setLocationState('failed');
       }
