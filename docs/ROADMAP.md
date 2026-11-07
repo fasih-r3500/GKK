@@ -72,7 +72,7 @@ Ordered to match the cold start: **chef onboarding and kitchen quality come befo
 
 - ✅ Build-artifact ignore patterns (`*.apk`, `*.aab`, `*.ipa`, `*.keystore`), added in the same change as these docs.
 - Relocate or delete the stray untracked `build-*.apk` artifact (it is **not** committed and must not be).
-- Resolve the stale `broken-nativewind` branch; it contains useful fixes (`react-native-svg`, `expo-dev-client`, an APK build type, a reanimated override) but merges in a way that deletes the whole feature set. Port the useful fixes, then delete the branch.
+- Resolve the stale `broken-nativewind` branch; it contains useful fixes (`expo-dev-client`, an APK build type, a reanimated override) but merges in a way that deletes the whole feature set. Port the useful fixes, then delete the branch.
 - Fix the `reset-project` npm script, which points at a missing `scripts/` directory.
 - Fix the `tailwind.config.js` brand-colour override of `green-100` (rename to a `brand` token).
 - Green the lint: it now reports zero errors, with the remaining warnings (mostly unused variables and `exhaustive-deps`) still to clear, alongside dead code and unused template assets.
