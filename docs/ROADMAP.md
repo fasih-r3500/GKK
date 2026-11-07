@@ -1,6 +1,6 @@
 # GKK — Roadmap
 
-> **Informed by the product owner, with a few questions still open.** This roadmap orders the work the owner has asked for. Where a decision is still genuinely unowned, it is listed under **Open questions** rather than guessed at.
+> **Informed by the product owner.** Where a decision is still genuinely unowned, it is listed under **Open questions** at the end rather than guessed at.
 
 **Context from the owner:**
 
@@ -8,7 +8,11 @@
 - Launch geography: **Karachi first**.
 - Both sides of the marketplace are in scope from day one: **home chefs** who list a kitchen, and **customers** who order from them.
 - **In-app ordering is required**, deliberately simple, with **manual settlement** (cash on delivery, JazzCash, Easypaisa, or bank transfer). The current phone-call flow is a stopgap.
-- **Cost sensitivity is an explicit constraint.** Where this roadmap has to name infrastructure, prefer the cheapest viable option — in practice that means continuing to use the Supabase backend already in place rather than introducing a new paid stack.
+- **Cost sensitivity is an explicit constraint.** Where this roadmap has to name infrastructure, prefer the cheapest viable option — in practice, continue using the Supabase backend already in place rather than introducing a new paid stack.
+- **Authentication: phone number + password.** SMS one-time codes are deferred to later. (The code today still uses email/password — that is the existing implementation, not the plan.)
+- **Chef phone numbers stay visible to every signed-in user for now**, with tightening deferred. This is a deliberate, known trade-off, recorded below as a follow-up item — not an unresolved question and not an omission.
+- **Platform:** the codebase stays cross-platform React Native and is intended to run on both Android and iOS. **Android is the first release target; iOS (and App Store shipping) follows later.** GKK is not Android-only.
+- **Cold start:** the owner will seed the **chef side first** by recruiting home cooks before opening to customers, so chef onboarding and kitchen quality come before customer acquisition.
 
 **Baseline (today):** Expo SDK 54 / React Native app, TypeScript type-checks, web bundle builds, but the Supabase backend is offline so the app cannot authenticate or load data. Native sessions are not persisted, `react-native-svg` is missing, and lint fails (5 errors / 14 warnings). The only working order path is the phone-call button. Full detail in [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and [`docs/FEATURES.md`](./FEATURES.md).
 
@@ -33,30 +37,41 @@ These stop the app from being usable at all.
 
 ---
 
-## Next — simple in-app ordering, then correctness and hygiene
+## Next — chef first, then ordering, then correctness and hygiene
 
-### Simple in-app ordering (the owner's core requirement)
+Ordered to match the cold start: **chef onboarding and kitchen quality come before customer acquisition.**
 
-The phone-call flow is a stopgap. Build the deliberately simple ordering path:
+### 1. Chef-side readiness (first)
+
+- Polish chef onboarding and kitchen quality so recruited home cooks can present a good kitchen and menu.
+- Recruit/seed home cooks through FI before opening to customers.
+- The dish-image bug below is chef-visible quality work and belongs here.
+
+### 2. Simple in-app ordering (the owner's core requirement)
 
 - A customer can place an order from a kitchen's menu (no cart/payment complexity required initially).
 - An **order record** persists per order (an `orders` table or equivalent), visible to both the customer and the chef — the Orders tabs on both home screens are the placeholder for this.
 - **Settlement stays manual and out-of-app:** cash on delivery, JazzCash, Easypaisa, or bank transfer. No in-app payment processing.
 - Reuse the existing Supabase backend (cheapest option) for the order table rather than adding new infrastructure.
 
-### Code bugs (two, surgical)
+### 3. Authentication: phone number + password
+
+- Replace the current email/password sign-in/sign-up with **phone number + password**.
+- SMS one-time codes are deferred to later (see below).
+
+### 4. Code bugs (two, surgical)
 
 1. Fix the **Rules-of-Hooks violation** in [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx) — hoist the hooks above the early return so a missing `chefid` can't change hook order and crash the screen.
 2. Fix the **dish image double-wrap** — store the bare storage path in `dishes.image_url` (matching kitchen images) instead of the full public URL, so customer-facing dish images load.
 
-### Dependency and SDK alignment
+### 5. Dependency and SDK alignment
 
 - Plan an **Expo SDK 58** upgrade (currently SDK 54, four majors behind and outside the current Expo Go support window).
 - Align the 14 packages below the SDK 54 patch line (`npx expo install --check`).
 - Work through the `npm audit` findings (44 at audit time; the bulk are dev/build toolchain, with `decode-uri-component`/`query-string` and `postcss` the runtime-relevant ones).
 - Prune unused direct dependencies (see [`docs/FEATURES.md`](./FEATURES.md) dead code list).
 
-### Repository hygiene
+### 6. Repository hygiene
 
 - ✅ Build-artifact ignore patterns (`*.apk`, `*.aab`, `*.ipa`, `*.keystore`) — added in the same change as these docs.
 - Relocate or delete the stray untracked `build-*.apk` artifact (it is **not** committed and must not be).
@@ -75,7 +90,9 @@ Once simple in-app ordering exists, the capabilities below become possible. They
 - **Notifications** (order received, order ready).
 - **Ratings / reviews** for kitchens.
 - **Order history and repeat ordering**.
-- Any **privacy and data-lifecycle** handling that accompanies storing orders and customer details (see Open questions).
+- **SMS one-time codes** for authentication (deferred from the phone+password change).
+- **Tighten chef phone-number visibility** once in-app ordering replaces the phone call — the deliberate follow-up to today's known trade-off (see Context).
+- **iOS release / App Store shipping** (deferred; Android ships first).
 
 ---
 
@@ -83,7 +100,5 @@ Once simple in-app ordering exists, the capabilities below become possible. They
 
 These decisions are still genuinely unowned. Do not guess at them.
 
-1. **Authentication method** — the owner asked for the *cheapest viable option* but did not specify one. Email/password (what the app uses today) is the obvious low-cost default; decide whether that stays, or whether a phone/OTP flow (common in Pakistan) is preferred despite higher cost.
-2. **Chef phone-number visibility** — should a chef's phone number stay visible to every signed-in customer (the current call-to-order flow), or should it be hidden once in-app ordering replaces the phone call?
-3. **iOS release** — is iOS ever a shipping target? The iOS bundle identifier is currently unset (`com.placeholder.appid`), so iOS builds are not shippable as-is. Android is configured (`com.fazaleinsaaniyat.gkk`).
-4. **License** — which license should the repository carry? (None exists today; it is the owner's choice and is deliberately not added here.)
+1. **License** — which license should the repository carry? (None exists today; it is the owner's choice and is deliberately not added here.)
+2. **Whether to begin the high-severity fix batch** — the "Now" blockers above (restore the backend, persist sessions, add `react-native-svg`) are identified, but starting that work awaits the owner's go-ahead.

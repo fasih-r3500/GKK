@@ -15,6 +15,15 @@ GKK is a community-serving initiative, not a commercial venture: prices are in P
 
 ---
 
+## Direction
+
+- **Authentication** is moving to phone number + password; SMS one-time codes are deferred. (The code today still uses email/password — that is the existing implementation, not the plan.)
+- **Platform** stays cross-platform React Native, intended for both Android and iOS. Android is the first release target; iOS and App Store shipping follow later.
+- **Chef first** — the owner will seed the chef side by recruiting home cooks before opening to customers, so chef onboarding and kitchen quality come before customer acquisition.
+- **Chef phone numbers** stay visible to every signed-in user for now, with tightening deferred — a deliberate, known trade-off.
+
+---
+
 ## Current status — read this first
 
 **The app is not currently usable end-to-end.** Be honest about where it stands before investing time in it:

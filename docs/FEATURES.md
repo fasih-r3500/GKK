@@ -56,7 +56,7 @@ This document lists what exists in the codebase **today**, organised by audience
 - File: [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx), `handleOrderNow`
 - Opens a `tel:` link to the chef's phone number. Disabled when the kitchen is not accepting orders.
 - **This phone-call flow is the only working order path today, and it is a stopgap.** In-app ordering, order history, and settlement are planned but **not built** (see "Not yet built" below).
-- Note: this exposes every chef's phone number to any authenticated customer — still an open question (see Roadmap).
+- Note: this exposes every chef's phone number to any authenticated customer. That is a **deliberate, known trade-off for now** — chef phone numbers stay visible to every signed-in user, with tightening deferred (see Roadmap).
 
 ### Search bar — **Stub (decorative)**
 - File: [`components/customer/CustomerHome.tsx`](../components/customer/CustomerHome.tsx)
@@ -104,6 +104,7 @@ These are required by the product owner but do not exist in the codebase yet. Th
 - **In-app ordering** — a simple flow for a customer to place an order from a kitchen's menu. The current phone-call button is the stopgap.
 - **Order records / order history** — an `orders` (or equivalent) table and history views for both sides. The Orders tabs on both home screens are placeholders for this.
 - **Settlement** — manual, outside the app: cash on delivery (COD), JazzCash, Easypaisa, or bank transfer. No payment processing is built or planned in-app.
+- **Phone + password authentication** — replace the current email/password sign-in/sign-up with phone number + password; SMS one-time codes are deferred.
 
 See [`docs/ROADMAP.md`](./ROADMAP.md) for the ordering of this work.
 
