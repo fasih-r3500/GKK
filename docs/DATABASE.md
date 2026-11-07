@@ -121,7 +121,7 @@ One row per menu item, owned by a chef.
 | `name` | text | no | | Dish name. |
 | `description` | text | yes | | Dish description. |
 | `price` | numeric(10,2) | no | | Price in PKR, check greater than 0. |
-| `image_url` | text | yes | | Dish image location. |
+| `image_url` | text | yes | | Dish image object path in the `avatars` storage bucket, such as `dish-images/<user>-<timestamp>.jpg`. Older rows can hold a full public URL; the app renders both shapes. |
 | `category` | text | yes | `'main'` | Menu category such as starter, main, dessert, side, or drink. |
 | `cuisine_type` | text | yes | | Dish cuisine. |
 | `dietary_info` | text[] | yes | `'{}'` | Dietary tags. |

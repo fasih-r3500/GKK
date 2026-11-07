@@ -12,7 +12,7 @@ GKK is a small Expo / React Native app (~2,300 lines across 10 route/component f
 
 - **Expo Router** file-based routing (`app/`).
 - **A single Supabase client** in [`supabase.js`](../supabase.js) used directly from components.
-- **No service/repository layer** (except [`services/locationService.tsx`](../services/locationService.tsx)).
+- **No service/repository layer** (except [`services/locationService.tsx`](../services/locationService.tsx) and the storage helpers in [`services/storage.ts`](../services/storage.ts)).
 - **No global state library**: local React state only.
 
 The backend is a live Supabase project. Its schema is captured in [`supabase/migrations/00000000000000_baseline.sql`](../supabase/migrations/00000000000000_baseline.sql) and documented in [`docs/DATABASE.md`](./DATABASE.md).
@@ -64,7 +64,7 @@ The customer home screen:
 - **`ChefDashboard.tsx`** (the largest file, ~847 lines) provides:
   - An "Accepting Orders" toggle (`toggleAcceptingOrders`).
   - Inline editing of kitchen name, bio, address, and cuisine types.
-  - Dish CRUD in a modal, including image upload to `avatars/dish-images/` (`uploadDishImage`, `ChefDashboard.tsx:199-224`).
+  - Dish CRUD in a modal, including image upload to `avatars/dish-images/` (`uploadDishImage`). The bare object path is stored in `dishes.image_url`, and the bytes are uploaded with an explicit content type so the storage bucket MIME allowlist accepts them.
   - Per-dish availability toggles and delete.
 
 ### Shared: `app/profile.tsx`
@@ -105,9 +105,11 @@ The client reads and writes three tables (all via inline `supabase.from(...)` ca
 
 ### Storage
 
-- Bucket: **`avatars`** (public).
+- Bucket: **`avatars`** (public). It holds kitchen photos and dish photos; there is no separate dish bucket.
+- Canonical stored value for an image column is a **bare object path** inside the bucket. Reads resolve that path to a public URL with `resolveStorageImageUrl` in [`services/storage.ts`](../services/storage.ts).
 - Kitchen images are uploaded to the bucket root (`ChefOnboarding.tsx:92-94`) and stored as a bare path (the file name built at `ChefOnboarding.tsx:90`) in `chef_profiles.kitchen_image`.
-- Dish images are uploaded to `dish-images/` (`ChefDashboard.tsx:206-218`), but the **full public URL** is stored in `dishes.image_url` rather than the bare path, which causes the dish-image bug in §7.
+- Dish images are uploaded under `dish-images/` and stored as a bare path such as `dish-images/<user>-<timestamp>.jpg` in `dishes.image_url` (`buildDishImagePath` and `uploadDishImage` in `ChefDashboard.tsx`).
+- `dishes.image_url` rows written before this convention hold a full public URL. `resolveStorageImageUrl` returns an absolute URL as is and only builds a public URL for a bare path, so both shapes render and no data migration is needed.
 
 ### Data flow
 
@@ -157,7 +159,7 @@ These are documented here for accuracy; they are not fixed by the documentation 
 | Defect | Location | Effect |
 |---|---|---|
 | Session not persisted | `supabase.js` (no storage adapter) | Logged out on every native restart |
-| Dish image URL double-wrapped | `ChefDashboard.tsx:216` stores full URL; `[chefid].tsx:89` re-wraps with `getPublicUrl` | Customer-facing dish images broken |
+| Dish image URL double-wrapped | `ChefDashboard.tsx` upload helper stored the full public URL; `[chefid].tsx` re-wrapped it with `getPublicUrl` | Customer-facing dish images broken. **Fixed**: uploads store the bare path and every read goes through `resolveStorageImageUrl` |
 | Auth redirect loop | `app/index.tsx` ↔ `app/_layout.tsx` | Possible infinite loop on missing profile row |
 
 See [`docs/ROADMAP.md`](./ROADMAP.md) for the proposed ordering.

@@ -86,7 +86,13 @@ No migration creates it; create it by hand in the dashboard or with the Supabase
   The app calls `getPublicUrl` to display images (`components/customer/CustomerHome.tsx:84`, `components/chef/ChefDashboard.tsx:325`, `app/kitchen/[chefid].tsx:92`).
 - **How the app uses it:**
   - Kitchen photos upload to the bucket root and are stored in `chef_profiles.kitchen_image` as a bare file name (`components/chef/ChefOnboarding.tsx:84-98`).
-  - Dish photos upload under `dish-images/` and are stored in `dishes.image_url` (`components/chef/ChefDashboard.tsx:199-224`).
+  - Dish photos upload under `dish-images/` and are stored in `dishes.image_url` as a bare path such as `dish-images/<user>-<timestamp>.jpg` (`components/chef/ChefDashboard.tsx` `uploadDishImage`).
+  - Both shapes are resolved for display by `resolveStorageImageUrl` in `services/storage.ts`: a bare path becomes a public URL, and a full URL (as written by older dish rows) is used as is.
+  - Dish uploads send an explicit content type (`image/jpeg`, `image/png`, `image/webp`, `image/heic`, or `image/heif`) with the raw image bytes. Without it the client would default to `text/plain;charset=UTF-8`, which the MIME allowlist below rejects.
+
+There is no separate dish bucket. The `dish-images/` prefix inside `avatars` is the only dish-photo location the app reads or writes, and it matches the `DISH_IMAGE_PREFIX` constant in `services/storage.ts`.
+
+The bucket itself, its public flag, its MIME allowlist, and its `storage.objects` RLS policies are configured in the Supabase dashboard. Neither the baseline migration nor any other file in this repository creates them, so a fresh project needs them created by hand before uploads or public reads work.
 
 Set these limits on the bucket (**Storage -> `avatars` -> Settings**):
 
