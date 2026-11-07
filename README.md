@@ -166,3 +166,9 @@ These are documented, not hidden. Each is a separate work item:
 5. Dependency drift — SDK 54 is four majors behind (58), plus `npm audit` findings.
 
 See [`docs/ROADMAP.md`](./docs/ROADMAP.md) for the full ordering and the decisions that still need a product owner.
+
+---
+
+## License
+
+GKK is released under the **MIT License** — see [`LICENSE`](./LICENSE). Licensing is settled: volunteers and other charities are free to use, modify, and share the work, provided the copyright notice is kept.

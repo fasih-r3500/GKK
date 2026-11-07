@@ -100,5 +100,4 @@ Once simple in-app ordering exists, the capabilities below become possible. They
 
 These decisions are still genuinely unowned. Do not guess at them.
 
-1. **License** — which license should the repository carry? (None exists today; it is the owner's choice and is deliberately not added here.)
-2. **Whether to begin the high-severity fix batch** — the "Now" blockers above (restore the backend, persist sessions, add `react-native-svg`) are identified, but starting that work awaits the owner's go-ahead.
+1. **Whether to begin the high-severity fix batch** — the "Now" blockers above (restore the backend, persist sessions, add `react-native-svg`) are identified, but starting that work awaits the owner's go-ahead.
