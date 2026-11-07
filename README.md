@@ -11,7 +11,7 @@ Chefs publish a kitchen profile and a menu of dishes; customers discover nearby 
 
 GKK is community-serving, not a commercial venture: prices are in PKR, phone numbers are formatted for `+92`, and ordering runs by phone call (a stopgap) until simple in-app ordering with manual settlement (cash on delivery, JazzCash, Easypaisa, or bank transfer) ships.
 
-The Supabase database is live and populated, so sign-in, sign-up, and data loading target real data. Native sessions are still not persisted and `react-native-svg` is still missing; the full status and the tracked issues live in [`docs/`](./docs/).
+The Supabase database is live and populated, so sign-in, sign-up, and data loading target real data. Native sessions are still not persisted; the full status and the tracked issues live in [`docs/`](./docs/).
 
 ## Direction
 
@@ -24,11 +24,11 @@ The Supabase database is live and populated, so sign-in, sign-up, and data loadi
 
 | Layer | Choice |
 |---|---|
-| Framework | [Expo](https://expo.dev) SDK 54 (installed `~54.0.20`; latest is 58) |
-| Runtime | React Native `0.81.5`, React `19.1.0` |
-| Navigation | [Expo Router](https://docs.expo.dev/router/introduction/) `~6.0.13` (file-based routing) |
-| Language | TypeScript `~5.9.2` (`strict: true`) |
-| Styling | [NativeWind](https://www.nativewind.dev) `4.2.1` + Tailwind CSS `3.4.18` |
+| Framework | [Expo](https://expo.dev) SDK 58 (installed `~58.0.23`) |
+| Runtime | React Native `0.88.1`, React `19.3.0` |
+| Navigation | [Expo Router](https://docs.expo.dev/router/introduction/) `~58.0.30` (file-based routing) |
+| Language | TypeScript `~6.0.3` (`strict: true`) |
+| Styling | [NativeWind](https://www.nativewind.dev) `4.2.7` + Tailwind CSS `3.4.18` |
 | Backend | [Supabase](https://supabase.com) (`@supabase/supabase-js` `2.81.1`): auth, Postgres tables, storage |
 | Icons | `lucide-react-native` |
 | Location | `expo-location` (geocoding + distance) |
@@ -57,7 +57,7 @@ See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for the full breakdown.
 
 ## Local setup
 
-Prerequisites: Node.js (recent LTS) with npm, plus a phone with Expo Go **or** a development build. Expo SDK 54 is outside the current Expo Go support window, so a development build may be required.
+Prerequisites: Node.js (recent LTS) with npm, plus a phone with Expo Go (SDK 58 is supported by current Expo Go) **or** a development build.
 
 1. **Install dependencies.** Use `npm ci` so you install exactly what the lockfile pins:
 
@@ -89,7 +89,7 @@ Prerequisites: Node.js (recent LTS) with npm, plus a phone with Expo Go **or** a
 
    ```bash
    npx tsc --noEmit        # type check, currently passes
-   npm run lint            # eslint, currently 5 errors / 14 warnings
+   npm run lint            # eslint, currently 0 errors (warnings remain)
    ```
 
 ## Documentation
