@@ -31,7 +31,7 @@ This document lists what exists in the codebase **today**, organised by audience
 - Native sessions are persisted: `supabase.js` passes AsyncStorage as the Supabase client's `auth.storage` adapter, so users stay signed in across app restarts.
 
 ### Profile screen: **Complete**
-- File: [`app/profile.tsx`](../app/profile.tsx)
+- File: [`components/profile/ProfileScreen.tsx`](../components/profile/ProfileScreen.tsx)
 - View full name, email, phone, and user type; change password; sign out.
 - Reads the live `profiles` table; password changes go through Supabase auth. Not verified end-to-end in this repository.
 
@@ -68,7 +68,7 @@ This document lists what exists in the codebase **today**, organised by audience
 - The header "Cart" button is rendered but has **no handler** and no cart state.
 
 ### Orders tab: **Stub (placeholder)**
-- File: [`components/customer/CustomerHome.tsx`](../components/customer/CustomerHome.tsx), `renderContent` → `"Orders"`
+- File: [`app/(customer)/orders.tsx`](../app/(customer)/orders.tsx)
 - Renders the literal text "Orders tab content here". No order history exists.
 
 ---
@@ -95,7 +95,7 @@ This document lists what exists in the codebase **today**, organised by audience
 - Not verified on a physical device from this repository.
 
 ### Orders tab: **Stub (placeholder)**
-- File: [`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx), `renderContent` → `"Orders"`
+- File: [`app/chef/orders.tsx`](../app/chef/orders.tsx)
 - Renders the literal text "Orders tab content here". No order management exists.
 
 ---
@@ -118,9 +118,8 @@ See [`docs/ROADMAP.md`](./ROADMAP.md) for the ordering of this work.
 These exist in the source but do nothing (not presented as features):
 
 - `handleOpenInMaps`: defined but never rendered ([`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx)).
-- `kitchenImageUrl`: computed but unused ([`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx)).
 - Unused template assets: `assets/images/location.png`, `react-logo*.png`, `partial-react-logo.png`.
-- Unused dependencies: `@react-navigation/bottom-tabs`, `@react-navigation/elements`, `expo-haptics`, `expo-symbols`, `expo-web-browser`, `expo-system-ui`, `expo-linking`, `expo-constants`, `@expo/vector-icons`, `prettier-plugin-tailwindcss` (see [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and the audit notes).
+- Unused dependencies: `@react-navigation/elements`, `expo-haptics`, `expo-symbols`, `expo-web-browser`, `expo-system-ui`, `expo-linking`, `expo-constants`, `@expo/vector-icons`, `prettier-plugin-tailwindcss` (see [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and the audit notes).
 
 ---
 

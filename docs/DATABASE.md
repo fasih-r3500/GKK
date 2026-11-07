@@ -390,15 +390,17 @@ The remaining tables, views, and functions are in the live schema and are ready 
 | --- | --- | --- |
 | `app/index.tsx` | `profiles` | Reads `user_type` for the signed-in user. |
 | `app/index.tsx` | `chef_profiles` | Reads `kitchen_name`, `kitchen_address`, and `cuisine_types` to decide whether chef onboarding is complete. |
-| `app/profile.tsx` | `profiles` | Reads `full_name`, `phone_number`, and `user_type` for the signed-in user. |
+| `components/profile/ProfileScreen.tsx` | `profiles` | Reads `full_name`, `phone_number`, and `user_type` for the signed-in user. |
 | `app/auth/signup.tsx` | `profiles`, `customer_profiles`, `chef_profiles` | Writes only through `supabase.auth.signUp` metadata; the `on_auth_user_created` trigger creates the rows. |
 | `app/kitchen/[chefid].tsx` | `chef_profiles` | Reads all columns plus the joined `profiles.phone_number` for one chef. |
 | `app/kitchen/[chefid].tsx` | `dishes` | Reads all columns for the chef's available dishes. |
 | `components/customer/CustomerHome.tsx` | `chef_profiles` | Reads `id`, `kitchen_name`, `cuisine_types`, `food_hygiene_rating`, `kitchen_image`, `latitude`, `longitude`, and `kitchen_address` where `is_active` and `is_accepting_orders` are true. |
 | `components/customer/CustomerHome.tsx` | `profiles` | Updates the signed-in user's `latitude`, `longitude`, `address`, and `city`. |
 | `components/chef/ChefOnboarding.tsx` | `chef_profiles` | Updates the chef's kitchen fields and sets `is_active` and `is_accepting_orders` to true. |
-| `components/chef/ChefDashboard.tsx` | `chef_profiles` | Reads all columns, updates `is_accepting_orders`, and edits individual kitchen fields. |
-| `components/chef/ChefDashboard.tsx` | `dishes` | Reads all columns, inserts, updates, and deletes the chef's dishes. |
+| `components/chef/ChefDashboard.tsx` | `chef_profiles` | Reads all columns and updates `is_accepting_orders`. |
+| `components/chef/KitchenInfoCard.tsx` | `chef_profiles` | Updates individual kitchen fields. |
+| `components/chef/ChefDashboard.tsx` | `dishes` | Reads all columns, updates `is_available`, and deletes the chef's dishes. |
+| `components/chef/DishFormModal.tsx` | `dishes` | Inserts and updates the chef's dishes. |
 
 Not yet read by any screen: `favorites`, `operating_hours`, `orders`, `order_items`, `reviews`, `chef_statistics`, `popular_dishes`, `calculate_chef_rating`, and `calculate_distance`.
 

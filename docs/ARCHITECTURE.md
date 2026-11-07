@@ -32,17 +32,24 @@ The backend is a live Supabase project. Its schema is captured in [`supabase/mig
 | Route | File | Responsibility |
 |---|---|---|
 | `_layout` | [`app/_layout.tsx`](../app/_layout.tsx) | Root `<Stack>` (headerless). Loads fonts, restores the auth session, and gates navigation: signed-out users are redirected to `/auth/login`, signed-in users are bounced out of the auth group back to `/`. |
-| `/` | [`app/index.tsx`](../app/index.tsx) | Dispatcher. Fetches the current user's `profiles.user_type`, then renders `CustomerHome`, `ChefOnboarding` (if a chef's setup is incomplete), or `ChefDashboard`. |
+| `/` | [`app/index.tsx`](../app/index.tsx) | Dispatcher. Fetches the current user's `profiles.user_type`, then redirects customers to `/home` and ready chefs to `/chef`. A chef with incomplete setup gets `ChefOnboarding` here. |
 | `/auth/login` | [`app/auth/login.tsx`](../app/auth/login.tsx) | Email/password sign-in form. |
 | `/auth/signup` | [`app/auth/signup.tsx`](../app/auth/signup.tsx) | Sign-up form with a customer/chef toggle and `+92` phone formatting. |
-| `/kitchen/[chefid]` | [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx) | Customer-facing kitchen page: chef profile, dish menu, and an "Order Now" call button that opens a `tel:` link. |
-| `/profile` | [`app/profile.tsx`](../app/profile.tsx) | Profile screen: view profile fields, change password, sign out. **Also imported as a plain component** by both home screens (see §6). |
+| `/kitchen/[chefid]` | [`app/kitchen/[chefid].tsx`](../app/kitchen/[chefid].tsx) | Customer-facing kitchen page: chef profile, dish menu, and an "Order Now" call button that opens a `tel:` link. Pushed on the root stack above the tabs. |
+| `(customer)/_layout` | [`app/(customer)/_layout.tsx`](../app/(customer)/_layout.tsx) | Customer tab navigator: Home, Orders, Profile. |
+| `/home` | [`app/(customer)/home.tsx`](../app/(customer)/home.tsx) | Customer home screen (kitchen list, location, filters). |
+| `/orders` | [`app/(customer)/orders.tsx`](../app/(customer)/orders.tsx) | Customer Orders placeholder. |
+| `/profile` | [`app/(customer)/profile.tsx`](../app/(customer)/profile.tsx) | Customer Profile tab, rendering the shared `ProfileScreen`. |
+| `chef/_layout` | [`app/chef/_layout.tsx`](../app/chef/_layout.tsx) | Chef tab navigator: Home, Orders, Profile. |
+| `/chef` | [`app/chef/index.tsx`](../app/chef/index.tsx) | Chef dashboard tab. |
+| `/chef/orders` | [`app/chef/orders.tsx`](../app/chef/orders.tsx) | Chef Orders placeholder. |
+| `/chef/profile` | [`app/chef/profile.tsx`](../app/chef/profile.tsx) | Chef Profile tab, rendering the shared `ProfileScreen`. |
 
 ### Navigation details
 
-- Navigation is a **root Stack** defined in [`app/_layout.tsx:56`](../app/_layout.tsx). Auth pages and the dispatcher are stack routes.
-- The customer/chef "tabs" (Home / Orders / Profile) are **hand-rolled** bottom nav bars, duplicated in [`components/customer/CustomerHome.tsx`](../components/customer/CustomerHome.tsx) and [`components/chef/ChefDashboard.tsx`](../components/chef/ChefDashboard.tsx). They are not React Navigation tabs.
-- Both home screens render the Profile tab by importing the route module `../../app/profile` directly as a component (route-as-component anti-pattern, §6).
+- Navigation is a **root Stack** defined in [`app/_layout.tsx`](../app/_layout.tsx). Auth pages, the dispatcher, and the kitchen detail page are stack routes.
+- The customer and chef surfaces are **Expo Router `Tabs` layouts** in two route groups. Both render [`components/navigation/AppTabs.tsx`](../components/navigation/AppTabs.tsx), which is the single tab bar definition; the per-surface tab list lives in [`components/navigation/tabs.ts`](../components/navigation/tabs.ts).
+- The Profile tab is a real route on each surface. Both routes render the shared screen component in [`components/profile/ProfileScreen.tsx`](../components/profile/ProfileScreen.tsx); no screen imports a route file as a component.
 
 ---
 
@@ -52,24 +59,28 @@ The backend is a live Supabase project. Its schema is captured in [`supabase/mig
 
 The customer home screen:
 
-- Fetches active, accepting chefs from `chef_profiles` (`fetchChefs`, `CustomerHome.tsx:59-90`).
+- Fetches active, accepting chefs from `chef_profiles` (`fetchChefs`).
 - Resolves chef kitchen images to public URLs via the `avatars` bucket.
-- Loads the user's location via `LocationService.getCurrentLocation()` and saves it back to `profiles` (`saveUserLocation`, `CustomerHome.tsx:36-57`).
-- Filters by radius and sorts by distance / rating / name (`getSortedChefs`, `CustomerHome.tsx:92-138`).
+- Loads the user's location via `LocationService.getCurrentLocation()` and saves it back to `profiles` (`saveUserLocation`).
+- Filters by radius and sorts by distance / rating / name in a `useMemo` (`sortedChefs`), so the work runs only when an input changes.
+- Renders the kitchen list with `FlatList`, memoised rows in [`ChefCard.tsx`](../components/customer/ChefCard.tsx), and a memoised filter bar in [`ChefFilters.tsx`](../components/customer/ChefFilters.tsx) that owns its dropdown state.
 - Navigates to `/kitchen/[chefid]` with the selected chef's id.
+
+Images in list rows go through [`components/ui/RemoteImage.tsx`](../components/ui/RemoteImage.tsx), which asks Supabase for a display-sized variant and falls back to the original URL when image transformations are not enabled on the project.
 
 ### Chef: `components/chef/ChefDashboard.tsx` and `components/chef/ChefOnboarding.tsx`
 
-- **`ChefOnboarding.tsx`** is a 3-step wizard (kitchen info → location → cuisines). It geocodes the kitchen address via `LocationService`, uploads a kitchen photo to the `avatars` bucket (`uploadImage`, `ChefOnboarding.tsx:260-275`), and writes the profile to `chef_profiles`.
-- **`ChefDashboard.tsx`** (the largest file, ~847 lines) provides:
+- **`ChefOnboarding.tsx`** is a 3-step wizard (kitchen info → location → cuisines). It geocodes the kitchen address via `LocationService`, uploads a kitchen photo to the `avatars` bucket (`uploadImage`), and writes the profile to `chef_profiles`.
+- **`ChefDashboard.tsx`** renders a virtualised `FlatList` of dishes with the kitchen overview as its header. It provides:
   - An "Accepting Orders" toggle (`toggleAcceptingOrders`).
-  - Inline editing of kitchen name, bio, address, and cuisine types.
-  - Dish CRUD in a modal, including image upload to `avatars/dish-images/` (`uploadDishImage`). The bare object path is stored in `dishes.image_url`, and the bytes are uploaded with an explicit content type so the storage bucket MIME allowlist accepts them.
-  - Per-dish availability toggles and delete.
+  - Inline kitchen editing, in [`KitchenInfoCard.tsx`](../components/chef/KitchenInfoCard.tsx), which keeps edit state local to the card.
+  - Dish CRUD in a modal, in [`DishFormModal.tsx`](../components/chef/DishFormModal.tsx), including image upload to `avatars/dish-images/`. The bare object path is stored in `dishes.image_url`, and the bytes are uploaded with an explicit content type so the storage bucket MIME allowlist accepts them.
+  - Per-dish availability toggles and delete, with memoised rows in [`DishCard.tsx`](../components/chef/DishCard.tsx) and local list updates instead of a full refetch.
+- Shared chef model types live in [`components/chef/types.ts`](../components/chef/types.ts).
 
-### Shared: `app/profile.tsx`
+### Shared: `components/profile/ProfileScreen.tsx`
 
-Profile viewing, password change, and sign-out. Used as a route and embedded as a tab in both home screens.
+Profile viewing, password change, and sign-out. Rendered by both the customer and chef Profile tab routes.
 
 ---
 
@@ -104,7 +115,7 @@ The client reads and writes three tables (all via inline `supabase.from(...)` ca
 
 | Table | Where it is used | Notable columns the client relies on |
 |---|---|---|
-| `profiles` | `app/index.tsx`, `app/auth/signup.tsx` (via auth metadata), `app/profile.tsx`, `app/kitchen/[chefid].tsx` (join), `components/customer/CustomerHome.tsx` | `id`, `user_type`, `full_name`, `phone_number`, `latitude`, `longitude`, `address`, `city` |
+| `profiles` | `app/index.tsx`, `app/auth/signup.tsx` (via auth metadata), `components/profile/ProfileScreen.tsx`, `app/kitchen/[chefid].tsx` (join), `components/customer/CustomerHome.tsx` | `id`, `user_type`, `full_name`, `phone_number`, `latitude`, `longitude`, `address`, `city` |
 | `chef_profiles` | `app/index.tsx`, `app/kitchen/[chefid].tsx`, `components/chef/ChefDashboard.tsx`, `components/chef/ChefOnboarding.tsx`, `components/customer/CustomerHome.tsx` | `id`, `kitchen_name`, `bio`, `kitchen_address`, `postcode`, `cuisine_types`, `food_hygiene_rating`, `is_verified`, `is_accepting_orders`, `is_active`, `average_preparation_time`, `kitchen_image`, `social_media`, `latitude`, `longitude` |
 | `dishes` | `app/kitchen/[chefid].tsx`, `components/chef/ChefDashboard.tsx` | `id`, `chef_id`, `name`, `description`, `price`, `category`, `cuisine_type`, `dietary_info`, `spice_level`, `preparation_time`, `serving_size`, `ingredients`, `image_url`, `is_available`, `created_at` |
 
@@ -115,7 +126,7 @@ The client reads and writes three tables (all via inline `supabase.from(...)` ca
 - Bucket: **`avatars`** (public). It holds kitchen photos and dish photos; there is no separate dish bucket.
 - Canonical stored value for an image column is a **bare object path** inside the bucket. Reads resolve that path to a public URL with `resolveStorageImageUrl` in [`services/storage.ts`](../services/storage.ts).
 - Kitchen images are uploaded to the bucket root (`ChefOnboarding.tsx:268-271`) and stored as a bare path (the file name built at `ChefOnboarding.tsx:265`) in `chef_profiles.kitchen_image`.
-- Dish images are uploaded under `dish-images/` and stored as a bare path such as `dish-images/<user>-<timestamp>.jpg` in `dishes.image_url` (`buildDishImagePath` and `uploadDishImage` in `ChefDashboard.tsx`).
+- Dish images are uploaded under `dish-images/` and stored as a bare path such as `dish-images/<user>-<timestamp>.jpg` in `dishes.image_url` (`buildDishImagePath` and the `uploadDishImage` helper in `DishFormModal.tsx`).
 - `dishes.image_url` rows written before this convention hold a full public URL. `resolveStorageImageUrl` returns an absolute URL as is and only builds a public URL for a bare path, so both shapes render and no data migration is needed.
 
 ### Data flow
@@ -142,7 +153,7 @@ There is **no global state library** (no Redux, Zustand, or Context). State is l
 - The only cross-cutting state is the **auth session**, held in [`app/_layout.tsx:17-18`](../app/_layout.tsx) and driven by `supabase.auth.onAuthStateChange` ([`app/_layout.tsx:36`](../app/_layout.tsx)).
 - `app/index.tsx` re-derives the current user's role by querying `profiles` on mount.
 
-All Supabase models are typed as `any` in 11 places despite `strict: true` (`session` in `_layout.tsx`, `chefs`/`kitchen`/`dishes` in the home and dashboard components, and the `LocationService` signatures). `app/kitchen/[chefid].tsx` defines local `ChefProfile` and `Dish` interfaces that duplicate these models; there is no shared types module.
+Several Supabase models are still typed as `any` despite `strict: true` (`session` in `_layout.tsx`, the `chefs` state in `CustomerHome.tsx`, and the `LocationService` signatures). The chef side now uses the shared interfaces in `components/chef/types.ts`; `app/kitchen/[chefid].tsx` still defines its own overlapping `ChefProfile` and `Dish` interfaces.
 
 ---
 
@@ -151,11 +162,9 @@ All Supabase models are typed as `any` in 11 places despite `strict: true` (`ses
 These are structural issues, distinct from the specific code bugs listed in §7.
 
 1. **No service/repository layer.** Every data operation is an inline `supabase.from(...)` call in a component. There is no API abstraction, so changing backend behaviour or adding caching/offline support would touch every screen.
-2. **Hand-rolled tab bars.** The customer and chef "tabs" are duplicated `TouchableOpacity` nav bars rather than a shared tab navigator. The installed `@react-navigation/bottom-tabs` dependency is unused.
-3. **Route-as-component anti-pattern.** `CustomerHome.tsx` and `ChefDashboard.tsx` both `import ProfileScreen from '../../app/profile'` and render it as a plain component. This couples a route module to two screens and bypasses the router for that tab.
-4. **`any`-typed models, duplicated inline.** Model shapes are `any[]` in most components, with interfaces redefined only in `[chefid].tsx`. There is no shared types module.
-5. **Silent error handling.** Most fetch paths `console.error` and render empty states; some flows surface `Alert`s. There are no error boundaries, and `app/index.tsx` swallows profile-fetch errors (a chef whose profile fails to load silently renders the customer home).
-6. **Redirect-loop risk.** If a signed-in user's `profiles` row is missing or blocked, `app/index.tsx` pushes them to `/auth/login` while `app/_layout.tsx` immediately bounces any signed-in user out of the auth group: a potential infinite loop that depends on the live `profiles` row and the RLS policies.
+2. **`any`-typed models, duplicated inline.** Model shapes are still `any[]` in several components, and `app/kitchen/[chefid].tsx` defines local `ChefProfile` and `Dish` interfaces that overlap `components/chef/types.ts`. There is no app-wide shared types module.
+3. **Silent error handling.** Most fetch paths `console.error` and render empty states; some flows surface `Alert`s. There are no error boundaries, and `app/index.tsx` swallows profile-fetch errors (a chef whose profile fails to load silently renders the customer home).
+4. **Redirect-loop risk.** If a signed-in user's `profiles` row is missing or blocked, `app/index.tsx` pushes them to `/auth/login` while `app/_layout.tsx` immediately bounces any signed-in user out of the auth group: a potential infinite loop that depends on the live `profiles` row and the RLS policies.
 
 ---
 
@@ -165,7 +174,7 @@ These are documented here for accuracy; they are not fixed by the documentation 
 
 | Defect | Location | Effect |
 |---|---|---|
-| Dish image URL double-wrapped | `ChefDashboard.tsx` upload helper stored the full public URL; `[chefid].tsx` re-wrapped it with `getPublicUrl` | Customer-facing dish images broken. **Fixed**: uploads store the bare path and every read goes through `resolveStorageImageUrl` |
+| Dish image URL double-wrapped | The dish upload helper stored the full public URL; `[chefid].tsx` re-wrapped it with `getPublicUrl` | Customer-facing dish images broken. **Fixed**: uploads store the bare path and every read goes through `resolveStorageImageUrl` |
 | Auth redirect loop | `app/index.tsx` ↔ `app/_layout.tsx` | Possible infinite loop on missing profile row |
 
 See [`docs/ROADMAP.md`](./ROADMAP.md) for the proposed ordering.
