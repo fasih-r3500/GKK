@@ -1,11 +1,8 @@
-import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator } from "react-native";
+import { Redirect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import ChefDashboard from "../components/chef/ChefDashboard";
 import ChefOnboarding from "../components/chef/ChefOnboarding";
-import CustomerHome from "../components/customer/CustomerHome";
 import { supabase } from "../supabase";
 
 export default function Index() {
@@ -14,8 +11,12 @@ export default function Index() {
   const [userType, setUserType] = useState<'customer' | 'chef' | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isChefSetupComplete, setIsChefSetupComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const checkUserProfile = async () => {
+  const checkUserProfile = useCallback(async () => {
+    setError(null);
+    setLoading(true);
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -25,7 +26,6 @@ export default function Index() {
 
       setUserId(user.id);
 
-      // Get user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('user_type')
@@ -33,14 +33,11 @@ export default function Index() {
         .single();
 
       if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        router.replace('/auth/login');
-        return;
+        throw profileError;
       }
 
       setUserType(profile.user_type);
 
-      // If chef, check if setup is complete
       if (profile.user_type === 'chef') {
         const { data: chefProfile } = await supabase
           .from('chef_profiles')
@@ -48,7 +45,6 @@ export default function Index() {
           .eq('id', user.id)
           .single();
 
-        // Check if essential fields are filled
         const isSetupComplete =
           chefProfile &&
           chefProfile.kitchen_name &&
@@ -60,20 +56,19 @@ export default function Index() {
 
         setIsChefSetupComplete(isSetupComplete || false);
       }
-    } catch (error) {
-      console.error('Error checking user profile:', error);
+    } catch (err) {
+      console.error('Error checking user profile:', err);
+      const message =
+        (err as { message?: string } | null)?.message ?? 'Something went wrong.';
+      setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     checkUserProfile();
-  }, []);
-
-  const handleOnboardingComplete = () => {
-    setIsChefSetupComplete(true);
-  };
+  }, [checkUserProfile]);
 
   if (loading) {
     return (
@@ -83,30 +78,43 @@ export default function Index() {
     );
   }
 
-  // Render based on user type and setup status
   if (userType === 'chef') {
     if (!isChefSetupComplete) {
-      return (
-        <>
-          <StatusBar style="dark" />
-          <ChefOnboarding userId={userId!} onComplete={handleOnboardingComplete} />
-        </>
-      );
-    } else {
-      return (
-        <>
-          <StatusBar style="light" />
-          <ChefDashboard userId={userId!} />
-        </>
-      );
+      return <ChefOnboarding userId={userId!} onComplete={() => setIsChefSetupComplete(true)} />;
     }
+    return <Redirect href="/chef" />;
   }
 
-  // Default: Customer view
+  if (userType === 'customer') {
+    return <Redirect href="/home" />;
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView className="flex-1 bg-white justify-center items-center px-6">
+        <Text className="text-lg font-semibold text-gray-900 mb-2 text-center">
+          Couldn&apos;t load your account
+        </Text>
+        <Text className="text-sm text-gray-500 mb-6 text-center">{error}</Text>
+        <Pressable
+          className="bg-[#76AB85] rounded-full px-6 py-3 mb-3"
+          onPress={checkUserProfile}
+        >
+          <Text className="text-white font-semibold">Try again</Text>
+        </Pressable>
+        <Pressable
+          className="px-6 py-3"
+          onPress={() => router.replace('/auth/login')}
+        >
+          <Text className="text-[#76AB85] font-semibold">Log in</Text>
+        </Pressable>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <>
-      <StatusBar style="dark" />
-      <CustomerHome />
-    </>
+    <SafeAreaView className="flex-1 bg-white justify-center items-center">
+      <ActivityIndicator size="large" color="#76AB85" />
+    </SafeAreaView>
   );
 }

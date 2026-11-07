@@ -40,15 +40,20 @@ The Supabase database is live and populated, so sign-in, sign-up, and data loadi
 app/                        Expo Router file-based routes
   _layout.tsx               Root Stack + auth gate
   index.tsx                 Customer/chef dispatch by user_type
+  (customer)/               Customer tabs: home, orders, profile
+  chef/                     Chef tabs: dashboard, orders, profile
   auth/                     Sign-in and sign-up screens
   kitchen/[chefid].tsx      Kitchen page + dish menu
-  profile.tsx               Profile, password change, sign-out
 
 components/
-  chef/                     Chef dashboard and 3-step onboarding
-  customer/CustomerHome.tsx Chef list, radius filter, sorting, tabs
+  navigation/               Shared Expo Router tab bar and tab lists
+  chef/                     Chef dashboard, dish form, on-boarding helper
+  customer/                 Customer home, kitchen cards, filters
+  profile/ProfileScreen.tsx Profile, password change, sign-out
+  ui/RemoteImage.tsx        Display-sized image with fallback
 
 services/locationService.tsx Geocoding, distance, radius filter, sorting
+services/imageUrl.ts        Display-size image URLs for Supabase Storage
 
 supabase.js                 Single Supabase client (hard-coded URL + anon key)
 ```
