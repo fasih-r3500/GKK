@@ -402,8 +402,41 @@ The remaining tables, views, and functions are in the live schema and are ready 
 
 Not yet read by any screen: `favorites`, `operating_hours`, `orders`, `order_items`, `reviews`, `chef_statistics`, `popular_dishes`, `calculate_chef_rating`, and `calculate_distance`.
 
-## Migration file
+## Migration files
 
 - `supabase/migrations/00000000000000_baseline.sql`
+- `supabase/migrations/00000000000001_storage.sql`
 
 Apply instructions live in [`supabase/README.md`](../supabase/README.md).
+
+## Storage
+
+The baseline cannot describe storage: `pg_dump --schema-only --schema=public` does not emit the `storage` schema, so the buckets and the `storage.objects` policies were configured by hand in the dashboard and were recorded nowhere in this repository.
+[`supabase/migrations/00000000000001_storage.sql`](../supabase/migrations/00000000000001_storage.sql) now captures them, and re-running it is safe.
+
+Two public buckets are configured, **`avatars`** and **`dish-images`**:
+
+- Both are public, so an image URL works without a signed URL.
+- Both have a 5 MB limit per file (`file_size_limit = 5242880`).
+- Both accept `image/jpeg`, `image/png`, `image/webp`, `image/heic`, and `image/heif` (`allowed_mime_types`).
+- The migration updates the buckets when they exist and inserts them as public when they do not, so a rebuild ends in the same state either way.
+
+The app writes only to `avatars`.
+Kitchen photos sit at the bucket root and dish photos sit under the `dish-images/` prefix inside `avatars`, which matches `DISH_IMAGE_PREFIX` in [`services/storage.ts`](../services/storage.ts).
+The separate `dish-images` bucket is provisioned but unused by current app code.
+
+Four policies cover `storage.objects`.
+Each is written as `drop policy if exists` followed by `create policy`, so the file is idempotent:
+
+- `GKK public read storage images`: `select` for role `public`, allowed on objects in the `avatars` and `dish-images` buckets.
+- `GKK authenticated insert storage images`: `insert` for role `authenticated`, allowed on objects in those two buckets.
+- `GKK authenticated update storage images`: `update` for role `authenticated`, allowed on objects in those two buckets.
+- `GKK authenticated delete storage images`: `delete` for role `authenticated`, allowed on objects in those two buckets.
+
+Row level security is enabled on `storage.objects` in a Supabase project by default, and the migration leaves that flag alone.
+The broken state this replaces had it enabled with zero policies, which refuses every upload while returning nothing the client can show as an error; that is why dish photo uploads failed silently.
+The migration fixes that by adding the four policies, not by changing the flag.
+
+Gap: no per-user path convention.
+The write policies check only `bucket_id`, so any signed-in user can update or delete another user's file at a known path, and object names are predictable because they carry the owner's user id.
+Adding an `auth.uid()` check on the first path segment, with paths such as `avatars/<uid>/<file>`, is the hardening step for later; it changes what the app writes, so it needs its own change under `app/`, `components/`, and `services/`.

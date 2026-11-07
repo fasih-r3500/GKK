@@ -89,6 +89,7 @@ Once simple in-app ordering exists, the capabilities below become possible. They
 - **Order history and repeat ordering**.
 - **SMS one-time codes** for authentication (deferred from the phone+password change).
 - **Tighten chef phone-number visibility** once in-app ordering replaces the phone call: the deliberate follow-up to today's known trade-off (see Context).
+- **Storage hardening:** the buckets and the four `storage.objects` policies are now captured in [`supabase/migrations/00000000000001_storage.sql`](../supabase/migrations/00000000000001_storage.sql), so a rebuild no longer loses them; a per-user path convention with an `auth.uid()` check is a later hardening item, because today any signed-in user can overwrite or delete another user's file at a known path.
 - **iOS release / App Store shipping** (deferred; Android ships first).
 
 ---

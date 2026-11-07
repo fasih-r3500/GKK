@@ -3,6 +3,7 @@
 This directory holds the SQL migrations for the Supabase project behind GharKaKhana (GKK).
 The database is live and populated.
 `migrations/00000000000000_baseline.sql` is a schema-only dump of that database, not a reconstruction from application source.
+`migrations/00000000000001_storage.sql` records the storage configuration, which the dump cannot reach because it lives in the `storage` schema rather than `public`.
 
 The baseline records the schema as it exists: nine tables in the `public` schema, the `user_type`, `order_status`, and `day_of_week` enum types, helper functions, views, triggers, indexes, and row level security policies.
 It also includes the `on_auth_user_created` trigger on `auth.users`, which was appended by hand because it lives outside the `public` schema.
@@ -45,6 +46,17 @@ Applying it creates a new database with the same schema; it does not copy any da
 
 4. Confirm under **Table Editor** that these nine tables exist: `profiles`, `chef_profiles`, `customer_profiles`, `dishes`, `favorites`, `operating_hours`, `orders`, `order_items`, and `reviews`.
 5. Confirm under **Authentication -> Policies** that row level security is enabled on all nine tables.
+6. Apply the storage configuration, which covers the `storage` schema that the baseline does not:
+
+   ```sh
+   psql "$DATABASE_URL" --single-transaction \
+     -f supabase/migrations/00000000000001_storage.sql
+   ```
+
+   It creates the `avatars` and `dish-images` buckets as public if they are absent, sets the 5 MB size limit and the image MIME allowlist on both, and creates the four `storage.objects` policies.
+   It is idempotent, so it is safe to re-run at any time.
+7. Confirm under **Storage** that both buckets exist, are marked public, and show a 5 MB limit with the five image types in their settings.
+   Without the storage migration, a fresh project has row level security enabled on `storage.objects` and no policies, so every upload is refused.
 
 The file contains the `\restrict` and `\unrestrict` psql meta-commands emitted by `pg_dump`.
 The dashboard SQL editor may reject those lines; use `psql`, or remove only those two lines if pasting the file into the editor.
@@ -76,27 +88,57 @@ The app does not query `reviews` yet.
 
 `docs/DATABASE.md` gives the per-table conditions and the full policy list.
 
-## Storage bucket
+## Storage
 
-The app expects one public storage bucket named **`avatars`**.
-No migration creates it; create it by hand in the dashboard or with the Supabase CLI.
+Storage is configured in two files: `migrations/00000000000001_storage.sql` for the buckets and the `storage.objects` policies, and the application code for which bucket it reads and writes.
+The baseline migration cannot cover storage: `pg_dump --schema-only --schema=public` does not emit the `storage` schema, so the buckets and their object policies were configured by hand in the dashboard and were recorded nowhere until the storage migration was added.
 
-- **Name:** `avatars`
-- **Public:** yes.
+### Buckets
+
+The storage migration configures two public buckets, **`avatars`** and **`dish-images`**:
+
+- **Public:** yes on both.
+  `avatars` is read with public URLs, and public means an image URL works without a signed URL.
   The app displays images by resolving the stored value with `resolveStorageImageUrl` in `services/storage.ts` (`components/chef/ChefDashboard.tsx`, `app/kitchen/[chefid].tsx`); `components/customer/CustomerHome.tsx:79` still calls `getPublicUrl` directly for kitchen photos.
-- **How the app uses it:**
+- **Maximum file size:** `5242880` bytes (5 MB) per file, set as `file_size_limit` on both buckets.
+- **Allowed MIME types:** `image/jpeg`, `image/png`, `image/webp`, `image/heic`, `image/heif`, set as `allowed_mime_types` on both buckets.
+  These are the five types the client sends.
+- **Which bucket the app actually uses:** only `avatars`.
+  The app source never names `dish-images` as a bucket; it uses `dish-images` as a folder prefix inside `avatars` (the `DISH_IMAGE_PREFIX` constant in `services/storage.ts`).
+  The `dish-images` bucket is provisioned and left empty, so a future move to a separate dish bucket needs no dashboard work.
+- **How the app uses `avatars`:**
   - Kitchen photos upload to the bucket root and are stored in `chef_profiles.kitchen_image` as a bare file name (`components/chef/ChefOnboarding.tsx:84-98`).
   - Dish photos upload under `dish-images/` and are stored in `dishes.image_url` as a bare path such as `dish-images/<user>-<timestamp>.jpg` (`components/chef/ChefDashboard.tsx` `uploadDishImage`).
   - Both shapes are resolved for display by `resolveStorageImageUrl` in `services/storage.ts`: a bare path becomes a public URL, and a full URL (as written by older dish rows) is used as is.
-  - Dish uploads send an explicit content type (`image/jpeg`, `image/png`, `image/webp`, `image/heic`, or `image/heif`) with the raw image bytes. Without it the client would default to `text/plain;charset=UTF-8`, which the MIME allowlist below rejects.
+  - Dish uploads send an explicit content type (`image/jpeg`, `image/png`, `image/webp`, `image/heic`, or `image/heif`) with the raw image bytes. Without it the client would default to `text/plain;charset=UTF-8`, which the MIME allowlist above rejects.
 
-There is no separate dish bucket. The `dish-images/` prefix inside `avatars` is the only dish-photo location the app reads or writes, and it matches the `DISH_IMAGE_PREFIX` constant in `services/storage.ts`.
-
-The bucket itself, its public flag, its MIME allowlist, and its `storage.objects` RLS policies are configured in the Supabase dashboard. Neither the baseline migration nor any other file in this repository creates them, so a fresh project needs them created by hand before uploads or public reads work.
-
-Set these limits on the bucket (**Storage -> `avatars` -> Settings**):
-
-- **Allowed MIME types:** `image/jpeg`, `image/png`, `image/webp`, `image/heic`, `image/heif`.
-- **Maximum file size:** 5 MB per file.
+The `dish-images/` prefix inside `avatars` is the only dish-photo location the app reads or writes, and it matches the `DISH_IMAGE_PREFIX` constant in `services/storage.ts`.
 
 The app does not enforce these limits itself; Supabase storage limits are the only hard limit.
+
+### Storage policies
+
+Row level security on `storage.objects` is enabled, and the storage migration adds four policies to it.
+It drops each policy before creating it, so re-running the file is safe.
+
+| Policy | Role | Command | Allows |
+| --- | --- | --- | --- |
+| `GKK public read storage images` | `public` | `select` | Reading any object in the `avatars` and `dish-images` buckets, signed in or not. |
+| `GKK authenticated insert storage images` | `authenticated` | `insert` | A signed-in user uploading a new object into either bucket. |
+| `GKK authenticated update storage images` | `authenticated` | `update` | A signed-in user replacing an object in either bucket. |
+| `GKK authenticated delete storage images` | `authenticated` | `delete` | A signed-in user removing an object from either bucket. |
+
+Every policy is restricted to those two bucket ids through `bucket_id in ('avatars', 'dish-images')`, so a future bucket is not writable or readable by these policies until it is added to them.
+
+This is the configuration that made uploads possible again.
+With row level security enabled and no policies at all, every upload was refused and the client showed no error, so dish photo failures looked like silence for weeks.
+Before the storage migration existed, nothing in the repository recorded the difference between those two states.
+
+### Known gap: no per-user folder convention
+
+Any signed-in user can overwrite or delete another user's file if they know its path, because the write policies check only the bucket and not the object path or owner.
+Object names today are predictable, since a dish photo is `dish-images/<user>-<timestamp>.<ext>` and a kitchen photo is a bare `<user>-<timestamp>.<ext>`, and a user id is visible to other signed-in users.
+An upload without `upsert` fails when the object exists, but `update` and `delete` on a known path are allowed outright, so a client that sets `upsert` or sends a delete can replace or remove another user's image.
+
+A per-user path convention, with an `auth.uid()` check on the first path segment in each write policy, is the hardening step to schedule.
+It is not part of this migration because it changes the paths the app writes and needs its own change under `app/`, `components/`, and `services/`.
