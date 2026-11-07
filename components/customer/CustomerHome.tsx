@@ -18,11 +18,6 @@ export default function CustomerHome() {
   const [showRadiusDropdown, setShowRadiusDropdown] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
 
-  useEffect(() => {
-    fetchChefs();
-    loadUserLocation();
-  }, []);
-
   const loadUserLocation = async () => {
     setLocationLoading(true);
     const location = await LocationService.getCurrentLocation();
@@ -88,6 +83,11 @@ export default function CustomerHome() {
       setChefs(chefsWithImages);
     }
   };
+
+  useEffect(() => {
+    fetchChefs();
+    loadUserLocation();
+  }, []);
 
   const getSortedChefs = () => {
     let filteredChefs = chefs;

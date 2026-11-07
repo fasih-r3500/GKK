@@ -70,10 +70,6 @@ export default function ChefDashboard({ userId }: ChefDashboardProps) {
   });
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  useEffect(() => {
-    fetchKitchenData();
-  }, []);
-
   const fetchKitchenData = async () => {
     try {
       const { data: kitchenData, error: kitchenError } = await supabase
@@ -100,6 +96,10 @@ export default function ChefDashboard({ userId }: ChefDashboardProps) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchKitchenData();
+  }, []);
 
   const toggleAcceptingOrders = async (value: boolean) => {
     setIsAcceptingOrders(value);

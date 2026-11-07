@@ -38,21 +38,10 @@ interface Dish {
 
 export default function KitchenPage() {
   const { chefid } = useLocalSearchParams();
-  
-  if (!chefid) return (
-    <View className="flex-1 justify-center items-center">
-      <Text>Chef ID missing</Text>
-    </View>
-  );
 
   const [chef, setChef] = useState<ChefProfile | null>(null);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!chefid) return;
-    fetchChefAndDishes(chefid as string);
-  }, [chefid]);
 
   const fetchChefAndDishes = async (id: string) => {
     setLoading(true);
@@ -105,6 +94,19 @@ export default function KitchenPage() {
     setDishes(dishesWithImages);
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (!chefid) return;
+    fetchChefAndDishes(chefid as string);
+  }, [chefid]);
+
+  if (!chefid) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text>Chef ID missing</Text>
+      </View>
+    );
+  }
 
   const handleOrderNow = () => {
     if (!chef?.phone_number) {

@@ -15,10 +15,6 @@ export default function Index() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isChefSetupComplete, setIsChefSetupComplete] = useState(false);
 
-  useEffect(() => {
-    checkUserProfile();
-  }, []);
-
   const checkUserProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -70,6 +66,10 @@ export default function Index() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    checkUserProfile();
+  }, []);
 
   const handleOnboardingComplete = () => {
     setIsChefSetupComplete(true);

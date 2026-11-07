@@ -151,7 +151,7 @@ export default function ChefOnboarding({ userId, onComplete }: ChefOnboardingPro
         Welcome, Chef! 👨‍🍳
       </Text>
       <Text className="text-base font-book text-gray-600 mb-6">
-        Let's set up your kitchen so customers can find and order from you.
+        Let&apos;s set up your kitchen so customers can find and order from you.
       </Text>
 
       {/* Kitchen Name */}
